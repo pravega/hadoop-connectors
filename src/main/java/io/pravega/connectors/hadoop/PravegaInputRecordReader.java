@@ -1,20 +1,11 @@
 /*
- * Copyright 2017 Dell/EMC
+ * Copyright (c) 2017 Dell Inc., or its subsidiaries. All Rights Reserved.
  *
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  */
 
 package io.pravega.connectors.hadoop;
@@ -33,10 +24,12 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
+import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * A RecordReader that can read events from an InputSplit(segment in pravega).
  */
+@NotThreadSafe
 public class PravegaInputRecordReader<V> extends RecordReader<MetadataWritable, V> {
 
     private static final Logger log = LoggerFactory.getLogger(PravegaInputRecordReader.class);
@@ -46,7 +39,6 @@ public class PravegaInputRecordReader<V> extends RecordReader<MetadataWritable, 
     private SegmentIterator<V> iterator;
     // Pravega Serializer to deserialize events saved in pravega
     private Serializer<V> deserializer;
-    private boolean debug;
 
     private MetadataWritable key;
     private V value;
@@ -66,7 +58,6 @@ public class PravegaInputRecordReader<V> extends RecordReader<MetadataWritable, 
     }
 
     public void initialize(InputSplit split, Configuration conf) throws IOException, InterruptedException {
-        debug = conf.getBoolean(PravegaInputFormat.DEBUG, false);
         this.split = (PravegaInputSplit) split;
         clientFactory = ClientFactory.withScope(conf.getRaw(PravegaInputFormat.SCOPE_NAME), URI.create(conf.getRaw(PravegaInputFormat.URI_STRING)));
         batchClient = clientFactory.createBatchClient();
@@ -79,8 +70,8 @@ public class PravegaInputRecordReader<V> extends RecordReader<MetadataWritable, 
                 Class<?> clazz = Class.forName(deserializerClassName);
                 deserializer = (Serializer<V>) clazz.newInstance();
             } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
-                e.printStackTrace();
-                throw new InterruptedException();
+                log.error("Exception when creating deserializer: {}", e);
+                throw new InterruptedException(e.toString());
             }
         }
         iterator = batchClient.readSegment(this.split.getSegment(), deserializer);
@@ -92,13 +83,11 @@ public class PravegaInputRecordReader<V> extends RecordReader<MetadataWritable, 
      * @return next Key/Value exists or not
      */
     @Override
-    public boolean nextKeyValue() throws IOException, InterruptedException {
+    public synchronized boolean nextKeyValue() throws IOException, InterruptedException {
         if (iterator.hasNext()) {
             key = new MetadataWritable(split, iterator.getOffset());
             value = iterator.next();
-            if (debug) {
-                log.info("Key: {}, Value: {} ({})", key, value, value.getClass().getName());
-            }
+            log.debug("Key: {}, Value: {} ({})", key, value, value.getClass().getName());
             return true;
         }
         return false;
@@ -115,15 +104,15 @@ public class PravegaInputRecordReader<V> extends RecordReader<MetadataWritable, 
     }
 
     @Override
-    public float getProgress() throws IOException, InterruptedException {
+    public synchronized float getProgress() throws IOException, InterruptedException {
         if (key != null && split.getLength() > 0) {
             return ((float) (key.getOffset() - split.getStartOffset())) / split.getLength();
         }
-        return 0;
+        return 0.0f;
     }
 
     @Override
-    public void close() throws IOException {
+    public synchronized void close() throws IOException {
         if (iterator != null) {
             iterator.close();
         }
