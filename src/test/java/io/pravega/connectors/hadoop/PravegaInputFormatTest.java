@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (c) 2017 Dell Inc., or its subsidiaries. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,7 +11,6 @@
 package io.pravega.connectors.hadoop;
 
 import io.pravega.client.stream.EventStreamWriter;
-import io.pravega.connectors.hadoop.PravegaInputFormat;
 import io.pravega.connectors.hadoop.utils.IntegerSerializer;
 import io.pravega.connectors.hadoop.utils.SetupUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -28,10 +27,10 @@ import java.util.concurrent.CompletableFuture;
 
 public class PravegaInputFormatTest {
 
-    private static final String scope = "scope";
-    private static final String stream = "stream";
-    private static final int numSegments = 3;
-    private static final int numEvents = 20;
+    private static final String TEST_SCOPE = "PravegaInputFormatTest";
+    private static final String TEST_STREAM = "stream";
+    private static final int NUM_SEGMENTS = 3;
+    private static final int NUM_EVENTS = 20;
 
     /**
      * Setup utility
@@ -40,10 +39,10 @@ public class PravegaInputFormatTest {
 
     @Before
     public void setupPravega() throws Exception {
-        SETUP_UTILS.startAllServices(this.scope);
-        SETUP_UTILS.createTestStream(this.stream, this.numSegments);
-        EventStreamWriter<Integer> writer = SETUP_UTILS.getIntegerWriter(this.stream);
-        for (int i = 0; i < this.numEvents; i++) {
+        SETUP_UTILS.startAllServices(TEST_SCOPE);
+        SETUP_UTILS.createTestStream(TEST_STREAM, NUM_SEGMENTS);
+        EventStreamWriter<Integer> writer = SETUP_UTILS.getIntegerWriter(TEST_STREAM);
+        for (int i = 0; i < NUM_EVENTS; i++) {
             CompletableFuture future = writer.writeEvent(i);
             future.get();
         }
@@ -57,15 +56,15 @@ public class PravegaInputFormatTest {
     @Test
     public void testGetSplits() throws IOException, InterruptedException {
         Configuration conf = new Configuration();
-        conf.setStrings(PravegaInputFormat.SCOPE_NAME, this.scope);
-        conf.setStrings(PravegaInputFormat.STREAM_NAME, this.stream);
+        conf.setStrings(PravegaInputFormat.SCOPE_NAME, TEST_SCOPE);
+        conf.setStrings(PravegaInputFormat.STREAM_NAME, TEST_STREAM);
         conf.setStrings(PravegaInputFormat.URI_STRING, SETUP_UTILS.getControllerUri());
         conf.setStrings(PravegaInputFormat.DESERIALIZER, IntegerSerializer.class.getName());
         Job job = new Job(conf);
 
         PravegaInputFormat<Integer> inputFormat = new PravegaInputFormat<>();
         List<InputSplit> splits = inputFormat.getSplits(job);
-        Assert.assertEquals(this.numSegments, splits.size());
+        Assert.assertEquals(NUM_SEGMENTS, splits.size());
         int totalLen, totalEndOffset;
         totalLen = totalEndOffset = 0;
         for (int i = 0; i < splits.size(); i++) {
@@ -75,7 +74,7 @@ public class PravegaInputFormatTest {
             totalLen += p.getEndOffset();
             totalEndOffset += p.getLength();
         }
-        Assert.assertEquals(this.numEvents * 12, totalLen);
-        Assert.assertEquals(this.numEvents * 12, totalEndOffset);
+        Assert.assertEquals(NUM_EVENTS * 12, totalLen);
+        Assert.assertEquals(NUM_EVENTS * 12, totalEndOffset);
     }
 }

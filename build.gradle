@@ -21,6 +21,7 @@ apply plugin: 'java'
 apply plugin: 'maven'
 apply plugin: 'eclipse'
 apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'checkstyle'
 
 group = 'io.pravega'
 version = connectorVersion
@@ -32,6 +33,13 @@ targetCompatibility = 1.8
 
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
+}
+
+checkstyle {
+    toolVersion = checkstyleToolVersion
+
+    configFile = new File(rootDir, "checkstyle/checkstyle.xml")
+    configProperties = [importControlFile: "$rootDir/checkstyle/import-control.xml"]
 }
 
 repositories {

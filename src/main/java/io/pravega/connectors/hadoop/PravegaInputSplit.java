@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (c) 2017 Dell Inc., or its subsidiaries. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,7 @@ import java.io.IOException;
 import javax.annotation.concurrent.NotThreadSafe;
 
 /**
- * Hadoop InputSplit implementation for pravega storage, each InputSplit is one segment
+ * Hadoop InputSplit implementation for Pravega.
  */
 @NotThreadSafe
 public class PravegaInputSplit extends InputSplit implements Writable {
@@ -38,7 +38,7 @@ public class PravegaInputSplit extends InputSplit implements Writable {
     }
 
     /**
-     * Creates an InputSplit to map pravega segment
+     * Creates an InputSplit corresponding to a Pravega segment.
      *
      * @param segment     The pravega segment
      * @param startOffset start offset in the segment
@@ -51,10 +51,9 @@ public class PravegaInputSplit extends InputSplit implements Writable {
     }
 
     /**
-     * Implements Writable interface
-     *
-     * @param in DataInput
+     * {@inheritDoc}
      */
+    @Override
     public void readFields(DataInput in) throws IOException {
         segment = Segment.fromScopedName(Text.readString(in));
         startOffset = in.readLong();
@@ -62,10 +61,9 @@ public class PravegaInputSplit extends InputSplit implements Writable {
     }
 
     /**
-     * Implements Writable interface
-     *
-     * @param out DataOutput
+     * {@inheritDoc}
      */
+    @Override
     public void write(DataOutput out) throws IOException {
         Text.writeString(out, segment.getScopedName());
         out.writeLong(startOffset);

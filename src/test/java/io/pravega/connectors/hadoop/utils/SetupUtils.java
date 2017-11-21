@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (c) 2017 Dell Inc., or its subsidiaries. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,6 +43,7 @@ public final class SetupUtils {
     /**
      * Start all pravega related services required for the test deployment.
      *
+     * @param scope the scope to use.
      * @throws Exception on any errors.
      */
     public void startAllServices(String scope) throws Exception {

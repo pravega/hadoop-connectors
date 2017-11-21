@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (c) 2017 Dell Inc., or its subsidiaries. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,18 +15,25 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInput;
+import java.io.DataInputStream;
+import java.io.DataOutput;
+import java.io.DataOutputStream;
+import java.io.IOException;
 
 public class PravegaInputSplitTest {
 
-    private static final String scope = "scope";
-    private static final String stream = "stream";
+    private static final String TEST_SCOPE = "PravegaInputSplitTest";
+    private static final String TEST_STREAM = "stream";
+
     private Segment segment;
     private PravegaInputSplit split;
 
     @Before
     public void setUp() {
-        segment = new Segment(scope, stream, 10);
+        segment = new Segment(TEST_SCOPE, TEST_STREAM, 10);
         split = new PravegaInputSplit(segment, 1, 100);
     }
 

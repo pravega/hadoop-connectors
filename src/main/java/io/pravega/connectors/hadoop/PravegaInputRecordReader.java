@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (c) 2017 Dell Inc., or its subsidiaries. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,7 +27,7 @@ import java.net.URI;
 import javax.annotation.concurrent.NotThreadSafe;
 
 /**
- * A RecordReader that can read events from an InputSplit(segment in pravega).
+ * A RecordReader that can read events from an InputSplit as provided by {@link PravegaInputFormat}.
  */
 @NotThreadSafe
 public class PravegaInputRecordReader<V> extends RecordReader<MetadataWritable, V> {
@@ -45,9 +45,9 @@ public class PravegaInputRecordReader<V> extends RecordReader<MetadataWritable, 
 
 
     /**
-     * Initializes RecordReader by InputSplit and TaskAttemptContext
-     * <p>
-     * <p>connects to pravega and prepares to read events in the InputSplit(segment)
+     * Initializes RecordReader by InputSplit and TaskAttemptContext.
+     *
+     * <p>Connects to Pravega and prepares to read events in the InputSplit.
      *
      * @param split   InputSplit
      * @param context TaskAttemptContext
@@ -78,9 +78,9 @@ public class PravegaInputRecordReader<V> extends RecordReader<MetadataWritable, 
     }
 
     /**
-     * Retrieves next key value pair from InputSplit
+     * Retrieves the next key/value pair from the InputSplit.
      *
-     * @return next Key/Value exists or not
+     * @return next key/value exists or not
      */
     @Override
     public synchronized boolean nextKeyValue() throws IOException, InterruptedException {
@@ -93,11 +93,17 @@ public class PravegaInputRecordReader<V> extends RecordReader<MetadataWritable, 
         return false;
     }
 
+    /**
+     * Gets the key associated with the current key/value pair.
+     */
     @Override
     public MetadataWritable getCurrentKey() throws IOException, InterruptedException {
         return key;
     }
 
+    /**
+     * Gets the value associated with the current key/value pair.
+     */
     @Override
     public V getCurrentValue() throws IOException, InterruptedException {
         return value;

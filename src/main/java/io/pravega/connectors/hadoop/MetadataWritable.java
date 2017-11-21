@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (c) 2017 Dell Inc., or its subsidiaries. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,9 @@ import java.io.IOException;
 
 import javax.annotation.concurrent.NotThreadSafe;
 
+/**
+ * A writable key class for records produced by {@link PravegaInputRecordReader}.
+ */
 @NotThreadSafe
 public class MetadataWritable implements Writable {
 
@@ -28,7 +31,7 @@ public class MetadataWritable implements Writable {
     private Long timestamp;
 
     /**
-     * @deprecated Constructor used by Hadoop to init the class through reflection. Do not remove...
+     * Constructor used by Hadoop to init the class through reflection. Do not remove.
      */
     public MetadataWritable() {
     }
@@ -40,6 +43,7 @@ public class MetadataWritable implements Writable {
     }
 
     /**
+     * Gets the offset into the segment associated with the event.
      * @return offset in key
      */
     public long getOffset() {
@@ -47,6 +51,7 @@ public class MetadataWritable implements Writable {
     }
 
     /**
+     * Gets the input split associated with the event.
      * @return split in key
      */
     public PravegaInputSplit getSplit() {
@@ -54,6 +59,7 @@ public class MetadataWritable implements Writable {
     }
 
     /**
+     * Gets the timestamp information associated with the event.
      * @return timestamp in key
      */
     public Long getTimestamp() {
