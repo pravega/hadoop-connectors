@@ -27,8 +27,6 @@ public class EventKey implements Writable {
 
     private PravegaInputSplit split;
     private long offset;
-    // place holder
-    private Long timestamp;
 
     /**
      * Constructor used by Hadoop to init the class through reflection. Do not remove.
@@ -39,7 +37,6 @@ public class EventKey implements Writable {
     public EventKey(PravegaInputSplit split, long offset) {
         this.split = split;
         this.offset = offset;
-        this.timestamp = 0L;
     }
 
     /**
@@ -59,21 +56,12 @@ public class EventKey implements Writable {
     }
 
     /**
-     * Gets the timestamp information associated with the event.
-     * @return timestamp in key
-     */
-    public Long getTimestamp() {
-        return timestamp;
-    }
-
-    /**
      * {@inheritDoc}
      */
     @Override
     public void write(DataOutput out) throws IOException {
         split.write(out);
         WritableUtils.writeVLong(out, getOffset());
-        WritableUtils.writeVLong(out, getTimestamp());
     }
 
     /**
@@ -84,7 +72,6 @@ public class EventKey implements Writable {
         split = new PravegaInputSplit();
         split.readFields(in);
         offset = WritableUtils.readVLong(in);
-        timestamp = WritableUtils.readVLong(in);
     }
 
     /**
@@ -92,6 +79,6 @@ public class EventKey implements Writable {
      */
     @Override
     public String toString() {
-        return String.format("%s:%s:%s", split.toString(), String.valueOf(getOffset()), Long.toString(getTimestamp()));
+        return String.format("%s:%s", split.toString(), String.valueOf(getOffset()));
     }
 }

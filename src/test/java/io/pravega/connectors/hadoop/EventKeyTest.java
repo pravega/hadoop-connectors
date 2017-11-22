@@ -43,7 +43,6 @@ public class EventKeyTest {
     public void testEventKey() {
         Assert.assertEquals(5L, key.getOffset());
         Assert.assertEquals(split, key.getSplit());
-        Assert.assertEquals(Long.valueOf(0), key.getTimestamp());
     }
 
     @Test
@@ -58,6 +57,5 @@ public class EventKeyTest {
 
         Assert.assertEquals(0, key.getSplit().getSegment().compareTo(inKey.getSplit().getSegment()));
         Assert.assertEquals(key.getOffset(), inKey.getOffset());
-        Assert.assertEquals(key.getTimestamp(), inKey.getTimestamp());
     }
 }
