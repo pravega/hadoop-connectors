@@ -20,10 +20,10 @@ import java.io.IOException;
 import javax.annotation.concurrent.NotThreadSafe;
 
 /**
- * A writable key class for records produced by {@link PravegaInputRecordReader}.
+ * A writable key class for records (events) produced by {@link PravegaInputRecordReader}.
  */
 @NotThreadSafe
-public class MetadataWritable implements Writable {
+public class EventKey implements Writable {
 
     private PravegaInputSplit split;
     private long offset;
@@ -33,10 +33,10 @@ public class MetadataWritable implements Writable {
     /**
      * Constructor used by Hadoop to init the class through reflection. Do not remove.
      */
-    public MetadataWritable() {
+    public EventKey() {
     }
 
-    public MetadataWritable(PravegaInputSplit split, long offset) {
+    public EventKey(PravegaInputSplit split, long offset) {
         this.split = split;
         this.offset = offset;
         this.timestamp = 0L;

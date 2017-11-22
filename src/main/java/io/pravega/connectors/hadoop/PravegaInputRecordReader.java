@@ -30,7 +30,7 @@ import javax.annotation.concurrent.NotThreadSafe;
  * A RecordReader that can read events from an InputSplit as provided by {@link PravegaInputFormat}.
  */
 @NotThreadSafe
-public class PravegaInputRecordReader<V> extends RecordReader<MetadataWritable, V> {
+public class PravegaInputRecordReader<V> extends RecordReader<EventKey, V> {
 
     private static final Logger log = LoggerFactory.getLogger(PravegaInputRecordReader.class);
     private ClientFactory clientFactory;
@@ -40,7 +40,7 @@ public class PravegaInputRecordReader<V> extends RecordReader<MetadataWritable, 
     // Pravega Serializer to deserialize events saved in pravega
     private Serializer<V> deserializer;
 
-    private MetadataWritable key;
+    private EventKey key;
     private V value;
 
 
@@ -85,7 +85,7 @@ public class PravegaInputRecordReader<V> extends RecordReader<MetadataWritable, 
     @Override
     public synchronized boolean nextKeyValue() throws IOException, InterruptedException {
         if (iterator.hasNext()) {
-            key = new MetadataWritable(split, iterator.getOffset());
+            key = new EventKey(split, iterator.getOffset());
             value = iterator.next();
             log.debug("Key: {}, Value: {} ({})", key, value, value.getClass().getName());
             return true;
@@ -97,7 +97,7 @@ public class PravegaInputRecordReader<V> extends RecordReader<MetadataWritable, 
      * Gets the key associated with the current key/value pair.
      */
     @Override
-    public MetadataWritable getCurrentKey() throws IOException, InterruptedException {
+    public EventKey getCurrentKey() throws IOException, InterruptedException {
         return key;
     }
 

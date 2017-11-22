@@ -23,36 +23,36 @@ import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-public class MetadataWritableTest {
+public class EventKeyTest {
 
-    private static final String TEST_SCOPE = "MetadataWritableTest";
+    private static final String TEST_SCOPE = "EventKeyTest";
     private static final String TEST_STREAM = "stream";
 
     private Segment segment;
     private PravegaInputSplit split;
-    private MetadataWritable key;
+    private EventKey key;
 
     @Before
     public void setUp() {
         segment = new Segment(TEST_SCOPE, TEST_STREAM, 10);
         split = new PravegaInputSplit(segment, 1, 100);
-        key = new MetadataWritable(split, 5L);
+        key = new EventKey(split, 5L);
     }
 
     @Test
-    public void testMetadataWritable() {
+    public void testEventKey() {
         Assert.assertEquals(5L, key.getOffset());
         Assert.assertEquals(split, key.getSplit());
         Assert.assertEquals(Long.valueOf(0), key.getTimestamp());
     }
 
     @Test
-    public void testMetadataWritableWritable() throws IOException {
+    public void testEventKeyWrite() throws IOException {
         ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
         DataOutput out = new DataOutputStream(byteOutput);
         key.write(out);
         DataInput in = new DataInputStream(new ByteArrayInputStream(byteOutput.toByteArray()));
-        MetadataWritable inKey = new MetadataWritable();
+        EventKey inKey = new EventKey();
         inKey.readFields(in);
         byteOutput.close();
 

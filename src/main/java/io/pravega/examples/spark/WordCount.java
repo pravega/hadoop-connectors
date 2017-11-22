@@ -10,7 +10,7 @@
 
 package io.pravega.examples.spark;
 
-import io.pravega.connectors.hadoop.MetadataWritable;
+import io.pravega.connectors.hadoop.EventKey;
 import io.pravega.connectors.hadoop.PravegaInputFormat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.GenericOptionsParser;
@@ -44,7 +44,7 @@ public final class WordCount {
 
         JavaSparkContext sc = new JavaSparkContext(new SparkConf());
 
-        JavaPairRDD<MetadataWritable, String> lines = sc.newAPIHadoopRDD(conf, PravegaInputFormat.class, MetadataWritable.class, String.class);
+        JavaPairRDD<EventKey, String> lines = sc.newAPIHadoopRDD(conf, PravegaInputFormat.class, EventKey.class, String.class);
         JavaRDD<String> words = lines.map(x -> x._2).flatMap(s -> Arrays.asList(SPACE.split(s)).iterator());
         JavaPairRDD<String, Integer> ones = words.mapToPair(s -> new Tuple2<>(s, 1));
         JavaPairRDD<String, Integer> counts = ones.reduceByKey((i1, i2) -> i1 + i2);

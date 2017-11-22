@@ -47,7 +47,7 @@ Usage
         Job job = new Job(conf);
         job.setInputFormatClass(PravegaInputFormat.class);
 
-        // FYI, Key class is 'MetadataWritable', but you won't need it at most of time.
+        // FYI, Key class is 'EventKey', but you won't need it at most of time.
 ```
 
 Run Examples

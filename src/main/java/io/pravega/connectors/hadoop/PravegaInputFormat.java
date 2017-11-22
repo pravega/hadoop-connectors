@@ -31,7 +31,7 @@ import java.util.List;
 /**
  * An InputFormat that can be added as a source to read from Pravega in a hadoop batch job.
  */
-public class PravegaInputFormat<V> extends InputFormat<MetadataWritable, V> {
+public class PravegaInputFormat<V> extends InputFormat<EventKey, V> {
 
     // Pravega scope name
     public static final String SCOPE_NAME = "pravega.scope";
@@ -74,7 +74,7 @@ public class PravegaInputFormat<V> extends InputFormat<MetadataWritable, V> {
     }
 
     @Override
-    public RecordReader<MetadataWritable, V> createRecordReader(InputSplit inputSplit, TaskAttemptContext context) throws IOException, InterruptedException {
+    public RecordReader<EventKey, V> createRecordReader(InputSplit inputSplit, TaskAttemptContext context) throws IOException, InterruptedException {
         return new PravegaInputRecordReader<V>();
     }
 }
