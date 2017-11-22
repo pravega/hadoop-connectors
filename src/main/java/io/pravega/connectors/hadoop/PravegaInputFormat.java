@@ -27,6 +27,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * An InputFormat that can be added as a source to read from Pravega in a hadoop batch job.
@@ -54,12 +55,19 @@ public class PravegaInputFormat<V> extends InputFormat<EventKey, V> {
      */
     @Override
     public List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException {
+        // check parameters
         Configuration conf = context.getConfiguration();
-        List<InputSplit> splits = new ArrayList<InputSplit>();
+        final String scopeName = Optional.ofNullable(conf.get(PravegaInputFormat.SCOPE_NAME)).orElseThrow(() ->
+                new IOException("The input scope name must be configured (" + PravegaInputFormat.SCOPE_NAME + ")"));
+        final String streamName = Optional.ofNullable(conf.get(PravegaInputFormat.STREAM_NAME)).orElseThrow(() ->
+                new IOException("The input stream name must be configured (" + PravegaInputFormat.STREAM_NAME + ")"));
+        final URI controllerURI = Optional.ofNullable(conf.get(PravegaInputFormat.URI_STRING)).map(URI::create).orElseThrow(() ->
+                new IOException("The Pravega controller URI must be configured (" + PravegaInputFormat.URI_STRING + ")"));
+        final String deserializerClassName = Optional.ofNullable(conf.get(PravegaInputFormat.DESERIALIZER)).orElseThrow(() ->
+                new IOException("The event deserializer must be configured (" + PravegaInputFormat.DESERIALIZER + ")"));
 
-        final String scopeName = conf.getRaw(PravegaInputFormat.SCOPE_NAME);
-        final String streamName = conf.getRaw(PravegaInputFormat.STREAM_NAME);
-        final URI controllerURI = URI.create(conf.getRaw(PravegaInputFormat.URI_STRING));
+        // generate a split per segment
+        List<InputSplit> splits = new ArrayList<InputSplit>();
         try (ClientFactory clientFactory = ClientFactory.withScope(scopeName, controllerURI)) {
             BatchClient batchClient = clientFactory.createBatchClient();
 

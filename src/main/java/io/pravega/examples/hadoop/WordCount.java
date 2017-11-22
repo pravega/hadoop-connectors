@@ -10,6 +10,7 @@
 
 package io.pravega.examples.hadoop;
 
+import io.pravega.client.stream.impl.JavaSerializer;
 import io.pravega.connectors.hadoop.PravegaInputFormat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -44,6 +45,7 @@ public class WordCount extends Configured implements Tool {
         conf.setStrings(PravegaInputFormat.URI_STRING, remainingArgs[0]);
         conf.setStrings(PravegaInputFormat.SCOPE_NAME, remainingArgs[1]);
         conf.setStrings(PravegaInputFormat.STREAM_NAME, remainingArgs[2]);
+        conf.setStrings(PravegaInputFormat.DESERIALIZER, JavaSerializer.class.getName());
 
         Job job = Job.getInstance(conf, "WordCount");
         job.setJarByClass(WordCount.class);

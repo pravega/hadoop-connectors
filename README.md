@@ -37,12 +37,7 @@ Usage
         conf.setStrings(PravegaInputFormat.SCOPE_NAME, "myScope");
         conf.setStrings(PravegaInputFormat.STREAM_NAME, "myStream");
         conf.setStrings(PravegaInputFormat.URI_STRING, "tcp://127.0.0.1:9090");
-
-        // optional: default JavaSerializer is provided for Value class which implements 'java.io.Serializable',
-        // otherwise, needs to set DESERIALIZER class implementing 'io.pravega.client.stream.Serializer' interface for Value class,
-        // Where 'Value' is the event stored in Pravega
-        //
-        conf.setStrings(PravegaInputFormat.DESERIALIZER, MySerializer.class.getName());
+        conf.setStrings(PravegaInputFormat.DESERIALIZER, io.pravega.client.stream.impl.JavaSerializer.class.getName());
 
         Job job = new Job(conf);
         job.setInputFormatClass(PravegaInputFormat.class);

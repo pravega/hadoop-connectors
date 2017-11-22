@@ -10,6 +10,7 @@
 
 package io.pravega.examples.spark;
 
+import io.pravega.client.stream.impl.JavaSerializer;
 import io.pravega.connectors.hadoop.EventKey;
 import io.pravega.connectors.hadoop.PravegaInputFormat;
 import org.apache.hadoop.conf.Configuration;
@@ -41,6 +42,7 @@ public final class WordCount {
         conf.setStrings(PravegaInputFormat.URI_STRING, remainingArgs[0]);
         conf.setStrings(PravegaInputFormat.SCOPE_NAME, remainingArgs[1]);
         conf.setStrings(PravegaInputFormat.STREAM_NAME, remainingArgs[2]);
+        conf.setStrings(PravegaInputFormat.DESERIALIZER, JavaSerializer.class.getName());
 
         JavaSparkContext sc = new JavaSparkContext(new SparkConf());
 

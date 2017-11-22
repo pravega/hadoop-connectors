@@ -14,7 +14,6 @@ import io.pravega.client.ClientFactory;
 import io.pravega.client.batch.BatchClient;
 import io.pravega.client.batch.SegmentIterator;
 import io.pravega.client.stream.Serializer;
-import io.pravega.client.stream.impl.JavaSerializer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
@@ -59,20 +58,15 @@ public class PravegaInputRecordReader<V> extends RecordReader<EventKey, V> {
 
     public void initialize(InputSplit split, Configuration conf) throws IOException, InterruptedException {
         this.split = (PravegaInputSplit) split;
-        clientFactory = ClientFactory.withScope(conf.getRaw(PravegaInputFormat.SCOPE_NAME), URI.create(conf.getRaw(PravegaInputFormat.URI_STRING)));
+        clientFactory = ClientFactory.withScope(conf.get(PravegaInputFormat.SCOPE_NAME), URI.create(conf.get(PravegaInputFormat.URI_STRING)));
         batchClient = clientFactory.createBatchClient();
-        // create deserializer from user input, assign default one (JavaSerializer) if none
-        String deserializerClassName = conf.getRaw(PravegaInputFormat.DESERIALIZER);
-        if (deserializerClassName == null) {
-            deserializer = new JavaSerializer();
-        } else {
-            try {
-                Class<?> deserializerClass = Class.forName(deserializerClassName);
-                deserializer = (Serializer<V>) deserializerClass.newInstance();
-            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
-                log.error("Exception when creating deserializer: {}", e);
-                throw new IOException("Unable to create the event deserializer (" + deserializerClassName + ")", e);
-            }
+        String deserializerClassName = conf.get(PravegaInputFormat.DESERIALIZER);
+        try {
+            Class<?> deserializerClass = Class.forName(deserializerClassName);
+            deserializer = (Serializer<V>) deserializerClass.newInstance();
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+            log.error("Exception when creating deserializer: {}", e);
+            throw new IOException("Unable to create the event deserializer (" + deserializerClassName + ")", e);
         }
         iterator = batchClient.readSegment(this.split.getSegment(), deserializer);
     }
