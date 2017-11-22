@@ -67,11 +67,11 @@ public class PravegaInputRecordReader<V> extends RecordReader<EventKey, V> {
             deserializer = new JavaSerializer();
         } else {
             try {
-                Class<?> clazz = Class.forName(deserializerClassName);
-                deserializer = (Serializer<V>) clazz.newInstance();
+                Class<?> deserializerClass = Class.forName(deserializerClassName);
+                deserializer = (Serializer<V>) deserializerClass.newInstance();
             } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
                 log.error("Exception when creating deserializer: {}", e);
-                throw new InterruptedException(e.toString());
+                throw new IOException("Unable to create the event deserializer (" + deserializerClassName + ")", e);
             }
         }
         iterator = batchClient.readSegment(this.split.getSegment(), deserializer);
