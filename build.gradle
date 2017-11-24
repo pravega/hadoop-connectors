@@ -1,0 +1,83 @@
+/*
+ * Copyright (c) 2017 Dell Inc., or its subsidiaries. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ */
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.1'
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'eclipse'
+apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'checkstyle'
+
+group = 'io.pravega'
+version = connectorVersion
+
+description = """pravega-inputformat"""
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+checkstyle {
+    toolVersion = checkstyleToolVersion
+
+    configFile = new File(rootDir, "checkstyle/checkstyle.xml")
+    configProperties = [importControlFile: "$rootDir/checkstyle/import-control.xml"]
+}
+
+repositories {
+    mavenLocal()
+    if (findProperty("repositoryUrl")) {
+        maven {
+            url findProperty("repositoryUrl")
+        }
+    }
+    else {
+        jcenter()
+        mavenCentral()
+        maven { url "https://repository.apache.org/snapshots" }
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
+    }
+}
+
+dependencies {
+    compile(group: 'io.pravega', name: 'pravega-client', version: pravegaVersion) {
+        exclude group: 'org.slf4j', module: 'slf4j-api'
+        exclude group: 'log4j', module: 'log4j'
+    }
+
+    testCompile group: 'junit', name: 'junit', version: junitVersion
+    testCompile group: 'io.pravega', name: 'pravega-standalone', version: pravegaVersion
+
+    compileOnly group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion
+    compileOnly group: 'org.apache.hadoop', name: 'hadoop-mapreduce-client-core', version: hadoopVersion
+    compileOnly group: 'org.apache.spark', name: 'spark-core_2.11', version: sparkVersion
+}
+
+test {
+    dependsOn 'cleanTest'
+}
+
+shadowJar {
+    classifier = 'all'
+    version = version
+    zip64 = true
+    mergeServiceFiles()
+}
