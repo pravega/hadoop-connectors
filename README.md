@@ -51,11 +51,11 @@ Run Examples
 ```
 Hadoop (verified with Hadoop 2.8.1 on Ubuntu 16.04)
 
-HADOOP_CLASSPATH=build/libs/hadoop-connectors-0.2.0-SNAPSHOT-all.jar HADOOP_USER_CLASSPATH_FIRST=true hadoop jar build/libs/hadoop-connectors-0.2.0-SNAPSHOT-all.jar io.pravega.examples.hadoop.WordCount tcp://192.168.0.200:9090 myScope myStream /tmp/wordcount_output_new_dir
+HADOOP_CLASSPATH=build/libs/hadoop-connectors-0.3.0-SNAPSHOT-all.jar HADOOP_USER_CLASSPATH_FIRST=true hadoop jar build/libs/hadoop-connectors-0.3.0-SNAPSHOT-all.jar io.pravega.examples.hadoop.WordCount tcp://192.168.0.200:9090 myScope myStream /tmp/wordcount_output_new_dir
 ```
 
 ```
 Spark (verified with Spark 2.2.0 on Ubuntu 16.04)
 
-spark-submit --conf spark.driver.userClassPathFirst=true --class io.pravega.examples.spark.WordCount build/libs/hadoop-connectors-0.2.0-SNAPSHOT-all.jar tcp://192.168.0.200:9090 myScope myStream
+spark-submit --conf spark.driver.userClassPathFirst=true --class io.pravega.examples.spark.WordCount build/libs/hadoop-connectors-0.3.0-SNAPSHOT-all.jar tcp://192.168.0.200:9090 myScope myStream
 ```

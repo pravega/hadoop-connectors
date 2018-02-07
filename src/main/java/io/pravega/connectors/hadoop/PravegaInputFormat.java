@@ -74,7 +74,7 @@ public class PravegaInputFormat<V> extends InputFormat<EventKey, V> {
             for (Iterator<SegmentInfo> iter = batchClient.listSegments(new StreamImpl(scopeName, streamName)); iter.hasNext(); ) {
                 SegmentInfo segInfo = iter.next();
                 Segment segment = segInfo.getSegment();
-                PravegaInputSplit split = new PravegaInputSplit(segment, 0, segInfo.getLength());
+                PravegaInputSplit split = new PravegaInputSplit(segment, 0, segInfo.getWriteOffset());
                 splits.add(split);
             }
         }
