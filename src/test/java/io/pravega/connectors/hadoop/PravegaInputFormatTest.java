@@ -65,16 +65,12 @@ public class PravegaInputFormatTest {
         PravegaInputFormat<Integer> inputFormat = new PravegaInputFormat<>();
         List<InputSplit> splits = inputFormat.getSplits(job);
         Assert.assertEquals(NUM_SEGMENTS, splits.size());
-        int totalLen, totalEndOffset;
-        totalLen = totalEndOffset = 0;
+        int totalLength = 0;
         for (int i = 0; i < splits.size(); i++) {
             PravegaInputSplit p = (PravegaInputSplit) (splits.get(i));
             Assert.assertEquals(i, p.getSegment().getSegmentNumber());
-            Assert.assertEquals(0, p.getStartOffset());
-            totalLen += p.getEndOffset();
-            totalEndOffset += p.getLength();
+            totalLength += p.getLength();
         }
-        Assert.assertEquals(NUM_EVENTS * 12, totalLen);
-        Assert.assertEquals(NUM_EVENTS * 12, totalEndOffset);
+        Assert.assertEquals(NUM_EVENTS * 12, totalLength);
     }
 }
