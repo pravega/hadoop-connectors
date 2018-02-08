@@ -4,30 +4,37 @@ Apache Hadoop connectors for Pravega.
 Description
 -----------
 
-Implementation of PravegaInputFormat (with wordcount examples). It leverages Pravega batch client to read all existing events in parallel
-
+Implementation of a Hadoop input format for Pravega (with wordcount examples). It leverages Pravega batch client to read all existing events in parallel.
 
 Build
 -------
+The build script handles Pravega as a _source dependency_, meaning that the connector is linked to a specific commit of Pravega (as opposed to a specific release version) in order to faciliate co-development.  This is accomplished with a combination of a _git submodule_ and the use of Gradle's _composite build_ feature. 
+
+### Cloning the repository
+When cloning the connector repository, be sure to instruct git to recursively checkout submodules, e.g.:
+```
+git clone --recurse-submodules https://github.com/pravega/hadoop-connectors.git
+```
+
+To update an existing repository:
+```
+git submodule update --init --recursive
+```
 
 ### Building Pravega
+Pravega is built automatically by the connector build script.
 
-Install the Pravega client libraries to your local Maven repository:
+### Building Hadoop Connector
+Build the connector:
 ```
-$ git clone https://github.com/pravega/pravega.git
-$./gradlew install
-```
-
-### Building PravegaInputFormat
-```
-gradle build (w/o dependencies)
-gradle shadowJar (w/ dependencies)
+./gradlew build (w/o dependencies)
+./gradlew shadowJar (w/ dependencies)
 ```
 
 Test
 -------
 ```
-gradle test
+./gradlew test
 ```
 
 Usage
@@ -51,11 +58,11 @@ Run Examples
 ```
 Hadoop (verified with Hadoop 2.8.1 on Ubuntu 16.04)
 
-HADOOP_CLASSPATH=build/libs/hadoop-connectors-0.2.0-SNAPSHOT-all.jar HADOOP_USER_CLASSPATH_FIRST=true hadoop jar build/libs/hadoop-connectors-0.2.0-SNAPSHOT-all.jar io.pravega.examples.hadoop.WordCount tcp://192.168.0.200:9090 myScope myStream /tmp/wordcount_output_new_dir
+HADOOP_CLASSPATH=build/libs/hadoop-connectors-0.3.0-SNAPSHOT-all.jar HADOOP_USER_CLASSPATH_FIRST=true hadoop jar build/libs/hadoop-connectors-0.3.0-SNAPSHOT-all.jar io.pravega.examples.hadoop.WordCount tcp://192.168.0.200:9090 myScope myStream /tmp/wordcount_output_new_dir
 ```
 
 ```
 Spark (verified with Spark 2.2.0 on Ubuntu 16.04)
 
-spark-submit --conf spark.driver.userClassPathFirst=true --class io.pravega.examples.spark.WordCount build/libs/hadoop-connectors-0.2.0-SNAPSHOT-all.jar tcp://192.168.0.200:9090 myScope myStream
+spark-submit --conf spark.driver.userClassPathFirst=true --class io.pravega.examples.spark.WordCount build/libs/hadoop-connectors-0.3.0-SNAPSHOT-all.jar tcp://192.168.0.200:9090 myScope myStream
 ```
