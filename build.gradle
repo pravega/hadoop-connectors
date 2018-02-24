@@ -13,20 +13,20 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.1'
+        classpath group: 'com.github.jengelman.gradle.plugins', name:'shadow', version: shadowGradlePlugin
     }
 }
 
-apply plugin: 'java'
-apply plugin: 'maven'
+
 apply plugin: 'eclipse'
-apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'checkstyle'
+apply from: 'gradle/java.gradle'
+apply from: 'gradle/maven.gradle'
 
 group = 'io.pravega'
 version = connectorVersion
 
-description = """pravega-inputformat"""
+description = """Pravega Hadoop Connector(pravega-inputformat)"""
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -76,8 +76,14 @@ test {
 }
 
 shadowJar {
-    classifier = 'all'
+    classifier = null
     version = version
     zip64 = true
     mergeServiceFiles()
+}
+
+javadoc {
+    title = "Pravega Hadoop Connector"
+    failOnError = false
+    exclude "**/impl/**";
 }
