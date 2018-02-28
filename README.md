@@ -56,7 +56,7 @@ Run Examples
 ---
 
 ```
-Hadoop (verified with Hadoop 3.0.0 on Ubuntu 16.04)
+Hadoop (verified with Hadoop 2.8.3 on Ubuntu 16.04)
 
 1. setup hadoop/hdfs
 
