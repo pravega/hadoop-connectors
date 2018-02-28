@@ -12,7 +12,7 @@ package io.pravega.connectors.hadoop;
 
 import io.pravega.client.segment.impl.Segment;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.InputSplit;
 
 import java.io.DataInput;
@@ -24,7 +24,7 @@ import javax.annotation.concurrent.NotThreadSafe;
  * Hadoop InputSplit implementation for Pravega.
  */
 @NotThreadSafe
-public class PravegaInputSplit extends InputSplit implements Writable {
+public class PravegaInputSplit extends InputSplit implements WritableComparable<PravegaInputSplit> {
 
     // Pravega segment
     private Segment segment;
@@ -68,6 +68,21 @@ public class PravegaInputSplit extends InputSplit implements Writable {
         Text.writeString(out, segment.getScopedName());
         out.writeLong(startOffset);
         out.writeLong(endOffset);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int compareTo(PravegaInputSplit o) {
+        int res = segment.compareTo(o.getSegment());
+        if (res == 0) {
+            res = Long.compare(startOffset, o.getStartOffset());
+        }
+        if (res == 0) {
+            res = Long.compare(endOffset, o.getEndOffset());
+        }
+        return res;
     }
 
     public Segment getSegment() {

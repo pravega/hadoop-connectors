@@ -58,4 +58,28 @@ public class PravegaInputSplitTest {
         Assert.assertEquals(split.getStartOffset(), inSplit.getStartOffset());
         Assert.assertEquals(split.getEndOffset(), inSplit.getEndOffset());
     }
+
+    @Test
+    public void testPravegaInputSplitComparable() throws IOException {
+        Segment segment1 = new Segment(TEST_SCOPE, TEST_STREAM, 10);
+        PravegaInputSplit split1 = new PravegaInputSplit(segment1, 50, 70);
+
+        for (int seg = 9; seg <= 11; seg++) {
+            for (long start = 49; start <= 51; start++) {
+                for (long end = 69; end <= 71; end++) {
+                    Segment segment2 = new Segment(TEST_SCOPE, TEST_STREAM, seg);
+                    PravegaInputSplit split2 = new PravegaInputSplit(segment2, start, end);
+                    if (segment1.compareTo(segment2) == 0) {
+                        if (50 == start) {
+                            Assert.assertTrue(split1.compareTo(split2) == Long.compare(70, end));
+                        } else {
+                            Assert.assertTrue(split1.compareTo(split2) == Long.compare(50, start));
+                        }
+                    } else {
+                        Assert.assertTrue(split1.compareTo(split2) == segment1.compareTo(segment2));
+                    }
+                }
+            }
+        }
+    }
 }

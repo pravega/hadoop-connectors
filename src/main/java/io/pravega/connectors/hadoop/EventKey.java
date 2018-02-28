@@ -10,7 +10,7 @@
 
 package io.pravega.connectors.hadoop;
 
-import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.io.WritableUtils;
 
 import java.io.DataInput;
@@ -23,7 +23,7 @@ import javax.annotation.concurrent.NotThreadSafe;
  * A writable key class for records (events) produced by {@link PravegaInputRecordReader}.
  */
 @NotThreadSafe
-public class EventKey implements Writable {
+public class EventKey implements WritableComparable<EventKey> {
 
     private PravegaInputSplit split;
     private long offset;
@@ -72,6 +72,18 @@ public class EventKey implements Writable {
         split = new PravegaInputSplit();
         split.readFields(in);
         offset = WritableUtils.readVLong(in);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int compareTo(EventKey o) {
+        int res = split.compareTo(o.getSplit());
+        if (res == 0) {
+            res = Long.compare(offset, o.getOffset());
+        }
+        return res;
     }
 
     /**
