@@ -65,8 +65,11 @@ dependencies {
 
     testCompile group: 'junit', name: 'junit', version: junitVersion
     testCompile group: 'io.pravega', name: 'pravega-standalone', version: pravegaVersion
+    testCompile group: 'org.powermock', name: 'powermock-module-junit4', version: powermockVersion
+    testCompile group: 'org.powermock', name: 'powermock-api-mockito', version: powermockVersion
+    testCompile group: 'org.mockito', name: 'mockito-all', version: mockitoVersion
+    testCompile group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion
 
-    compileOnly group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion
     compileOnly group: 'org.apache.hadoop', name: 'hadoop-mapreduce-client-core', version: hadoopVersion
 }
 

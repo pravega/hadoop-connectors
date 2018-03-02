@@ -19,5 +19,10 @@
 
     <!-- flink dependencies -->
     <allow pkg="scala"/>
+
+    <!-- test dependencies -->
+    <allow pkg="org.mockito"/>
+    <allow pkg="org.powermock"/>
+
     
 </import-control>

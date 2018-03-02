@@ -10,78 +10,118 @@
 
 package io.pravega.connectors.hadoop;
 
-import io.pravega.client.stream.EventStreamWriter;
+import io.pravega.client.ClientFactory;
+import io.pravega.client.batch.BatchClient;
+import io.pravega.client.batch.SegmentIterator;
+import io.pravega.client.batch.impl.SegmentIteratorImpl;
+import io.pravega.client.segment.impl.Segment;
 import io.pravega.connectors.hadoop.utils.IntegerSerializer;
-import io.pravega.connectors.hadoop.utils.SetupUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapreduce.InputSplit;
-import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mockito;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.net.URI;
+
+import static org.mockito.Matchers.anyLong;
+import static org.mockito.Matchers.anyObject;
+import static org.mockito.Mockito.*;
 
 
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(ClientFactory.class)
 public class PravegaInputRecordReaderTest {
 
     private static final String TEST_SCOPE = "PravegaInputRecordReaderTest";
     private static final String TEST_STREAM = "stream";
-    private static final int NUM_SEGMENTS = 1;
-    private static final int NUM_EVENTS = 20;
+    private static final String TEST_URI = "tcp://127.0.0.1:9090";
+    private static final Long END_OFFSET = 100L;
 
-    /**
-     * Setup utility
-     */
-    private static final SetupUtils SETUP_UTILS = new SetupUtils();
+    private PravegaInputRecordReader<Integer> reader;
+    private PravegaInputSplit split;
+    private ClientFactory mockClientFactory;
+    private SegmentIterator<Integer> mockIterator;
+    private BatchClient mockBatchClient;
 
     @Before
-    public void setupPravega() throws Exception {
-        SETUP_UTILS.startAllServices(TEST_SCOPE);
-        SETUP_UTILS.createTestStream(TEST_STREAM, NUM_SEGMENTS);
-        EventStreamWriter<Integer> writer = SETUP_UTILS.getIntegerWriter(TEST_STREAM);
-        for (int i = 0; i < NUM_EVENTS; i++) {
-            CompletableFuture future = writer.writeEvent(i);
-            future.get();
-        }
-    }
-
-    @After
-    public void tearDownPravega() throws Exception {
-        SETUP_UTILS.stopAllServices();
+    public void setupTests() throws Exception {
+        mockClientFactoryStatic(TEST_SCOPE, TEST_URI);
+        mockTaskAttemptContextImpl();
+        reader = new PravegaInputRecordReader();
+        split = new PravegaInputSplit(new Segment(TEST_SCOPE, TEST_STREAM, 10), 0, END_OFFSET);
+        TaskAttemptContext ctx = new TaskAttemptContextImpl(null, null);
+        reader.initialize(split, ctx);
+        verify(ctx).getConfiguration();
+        verify(mockBatchClient).readSegment(anyObject(), anyObject(), anyLong(), anyLong());
     }
 
     @Test
-    public void testInitialize() throws IOException, InterruptedException {
+    public void testKeyValue() throws IOException, InterruptedException {
+        int i = 0;
+        while (reader.nextKeyValue()) {
+            Assert.assertTrue(0 == reader.getCurrentKey().compareTo(new EventKey(split, 4 * i)));
+            Assert.assertTrue(reader.getCurrentValue() == 10 * (i + 1));
+            Assert.assertTrue(reader.getProgress() == ((float) (4 * i - 0)) / END_OFFSET);
+            i++;
+        }
+        verify(mockIterator, times(4)).hasNext();
+        verify(mockIterator, times(3)).next();
+        verify(mockIterator, times(3)).getOffset();
+    }
+
+    @Test
+    public void testClose() throws IOException {
+        reader.close();
+        verify(mockIterator).close();
+        verify(mockClientFactory).close();
+    }
+
+    private void mockTaskAttemptContextImpl() throws Exception {
         Configuration conf = new Configuration();
         conf.setStrings(PravegaInputFormat.SCOPE_NAME, TEST_SCOPE);
         conf.setStrings(PravegaInputFormat.STREAM_NAME, TEST_STREAM);
-        conf.setStrings(PravegaInputFormat.URI_STRING, SETUP_UTILS.getControllerUri());
+        conf.setStrings(PravegaInputFormat.URI_STRING, TEST_URI);
         conf.setStrings(PravegaInputFormat.DESERIALIZER, IntegerSerializer.class.getName());
-        Job job = new Job(conf);
 
-        // get an InputSplit
-        PravegaInputFormat<Integer> inputFormat = new PravegaInputFormat<>();
-        List<InputSplit> splits = inputFormat.getSplits(job);
-        Assert.assertEquals(NUM_SEGMENTS, splits.size());
+        TaskAttemptContextImpl mockTaskAttemptContextImpl = mock(TaskAttemptContextImpl.class);
+        PowerMockito.whenNew(TaskAttemptContextImpl.class).withArguments(any(Configuration.class), any(TaskAttemptID.class)).thenReturn(mockTaskAttemptContextImpl);
+        Mockito.doReturn(conf).when(mockTaskAttemptContextImpl).getConfiguration();
+    }
 
-        PravegaInputRecordReader<Integer> r = new PravegaInputRecordReader<>();
-        TaskAttemptContext context = new TaskAttemptContextImpl(conf, new TaskAttemptID());
-        r.initialize(splits.get(0), context);
+    private void mockClientFactoryStatic(String scope, String uri) {
+        PowerMockito.mockStatic(ClientFactory.class);
+        mockClientFactory = mockClientFactory();
+        PowerMockito.when(ClientFactory.withScope(scope, URI.create(uri))).thenReturn(mockClientFactory);
+    }
 
-        for (int i = 0; i < NUM_EVENTS; i++) {
-            Assert.assertTrue(r.nextKeyValue());
-            Assert.assertEquals(i * 12, r.getCurrentKey().getOffset());
-            Assert.assertTrue(i == r.getCurrentValue());
-        }
-        Assert.assertFalse(r.nextKeyValue());
+    private ClientFactory mockClientFactory() {
+        ClientFactory mockClientFactory = mock(ClientFactory.class);
+        mockBatchClient = mockBatchClient();
+        Mockito.doReturn(mockBatchClient).when(mockClientFactory).createBatchClient();
+        return mockClientFactory;
+    }
 
-        r.close();
+    private BatchClient mockBatchClient() {
+        BatchClient mockBatchClient = mock(BatchClient.class);
+        mockIterator = mockIterator();
+        Mockito.doReturn(mockIterator).when(mockBatchClient).readSegment(anyObject(), anyObject(), anyLong(), anyLong());
+        return mockBatchClient;
+    }
+
+    private SegmentIterator<Integer> mockIterator() {
+        SegmentIterator<Integer> mockIterator = mock(SegmentIteratorImpl.class);
+        Mockito.when(mockIterator.hasNext()).thenReturn(true, true, true, false);
+        Mockito.when(mockIterator.next()).thenReturn(new Integer(10), new Integer(20), new Integer(30));
+        Mockito.when(mockIterator.getOffset()).thenReturn(0L, 4L, 8L);
+        return mockIterator;
     }
 }
