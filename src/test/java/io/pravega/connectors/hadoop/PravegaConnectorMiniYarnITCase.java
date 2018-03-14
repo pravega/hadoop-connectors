@@ -37,9 +37,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-public class PravegaConnectorMiniYarnTest {
+public class PravegaConnectorMiniYarnITCase {
 
-    private static final String TEST_SCOPE = "PravegaConnectorMiniYarnTest";
+    private static final String TEST_SCOPE = "PravegaConnectorMiniYarnITCase";
     private static final String TEST_STREAM = "stream";
     private static final int NUM_SEGMENTS = 3;
     private static final int NUM_NODES = 2;
@@ -49,10 +49,6 @@ public class PravegaConnectorMiniYarnTest {
     private Job job;
     private MiniYARNCluster yarnCluster;
     private MiniDFSCluster dfsCluster;
-
-    /**
-     * Setup utility
-     */
 
     @Before
     public void setUp() throws Exception {

@@ -55,8 +55,8 @@ public class PravegaInputFormatTest {
         JobContext ctx = getJobContext();
         Configuration c = ctx.getConfiguration();
         Assert.assertNotNull(c);
-        PravegaInputFormat<Integer> inputformat = new PravegaInputFormat();
-        List<InputSplit> splits = inputformat.getSplits(ctx);
+        PravegaInputFormat<Integer> inputFormat = new PravegaInputFormat();
+        List<InputSplit> splits = inputFormat.getSplits(ctx);
         Assert.assertEquals(splits.size(), 3);
         int i = 0;
         for (InputSplit s : splits) {
@@ -69,8 +69,8 @@ public class PravegaInputFormatTest {
 
     @Test
     public void testCreateRecordReader() throws IOException, InterruptedException {
-        PravegaInputFormat<Integer> inputformat = new PravegaInputFormat();
-        RecordReader<?, ?> reader = inputformat.createRecordReader(null, null);
+        PravegaInputFormat<Integer> inputFormat = new PravegaInputFormat();
+        RecordReader<?, ?> reader = inputFormat.createRecordReader(null, null);
         Assert.assertTrue(reader instanceof PravegaInputRecordReader);
     }
 
@@ -81,9 +81,8 @@ public class PravegaInputFormatTest {
         conf.setStrings(PravegaInputFormat.URI_STRING, TEST_URI);
         conf.setStrings(PravegaInputFormat.DESERIALIZER, IntegerSerializer.class.getName());
         Job mockJob = mock(Job.class);
-        PowerMockito.whenNew(Job.class).withAnyArguments().thenReturn(mockJob);
         Mockito.doReturn(conf).when(mockJob).getConfiguration();
-        return new Job(conf);
+        return mockJob;
     }
 
     private void mockClientFactoryStatic(String scope, String uri) {

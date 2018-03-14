@@ -70,6 +70,7 @@ dependencies {
     testCompile group: 'org.mockito', name: 'mockito-all', version: mockitoVersion
     testCompile group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion
 
+    compileOnly group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion
     compileOnly group: 'org.apache.hadoop', name: 'hadoop-mapreduce-client-core', version: hadoopVersion
 }
 

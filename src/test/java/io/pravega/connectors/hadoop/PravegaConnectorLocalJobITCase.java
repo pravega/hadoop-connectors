@@ -34,9 +34,9 @@ import java.util.List;
 import java.util.Map;
 
 
-public class PravegaConnectorLocalJobTest {
+public class PravegaConnectorLocalJobITCase {
 
-    private static final String TEST_SCOPE = "PravegaConnectorLocalJobTest";
+    private static final String TEST_SCOPE = "PravegaConnectorLocalJobITCase";
     private static final String TEST_STREAM = "stream";
     private static final int NUM_SEGMENTS = 3;
     private static final SetupUtils SETUP_UTILS = new SetupUtils();
@@ -44,10 +44,6 @@ public class PravegaConnectorLocalJobTest {
     private Path outputPath;
     private Job job;
     private FileSystem fs;
-
-    /**
-     * Setup utility
-     */
 
     @Before
     public void setUp() throws Exception {
@@ -101,7 +97,7 @@ public class PravegaConnectorLocalJobTest {
         conf.setStrings(PravegaInputFormat.DESERIALIZER, JavaSerializer.class.getName());
         Job job = Job.getInstance(conf, "WordCount");
 
-        job.setJarByClass(PravegaConnectorLocalJobTest.class);
+        job.setJarByClass(PravegaConnectorLocalJobITCase.class);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(IntWritable.class);
         job.setMapperClass(TokenizerMapper.class);

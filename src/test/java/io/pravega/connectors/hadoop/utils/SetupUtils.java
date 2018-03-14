@@ -40,6 +40,9 @@ public final class SetupUtils {
     // The test Scope name.
     @Getter
     private String scope;
+    // The controller port.
+    @Getter
+    private int controllerPort;
 
     /**
      * Start all pravega related services required for the test deployment.
@@ -55,7 +58,7 @@ public final class SetupUtils {
         }
 
         int zkPort = TestUtils.getAvailableListenPort();
-        int controllerPort = TestUtils.getAvailableListenPort();
+        controllerPort = TestUtils.getAvailableListenPort();
         int hostPort = TestUtils.getAvailableListenPort();
         int restPort = TestUtils.getAvailableListenPort();
 
