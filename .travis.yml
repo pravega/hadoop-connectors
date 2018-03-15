@@ -1,0 +1,19 @@
+language: java
+env:
+  global:
+  - GRADLE_OPTS="-Xms128m"
+cache:
+  directories:
+  - ".gradle"
+  - "$HOME/.gradle"
+notifications:
+  slack:
+    matrix:
+      secure: SR0arFY2SVk+7nNjwYVnrmZfKk2XZTxbyfHaAGf6iAbPLdfVijgTwy66AhIUQJgMvL6mDFSVrzgHEK/246/folweGNTjzW4gPZtJXXfvTxzPXPe6HXhRB8zRbNFKzmPjuDoVKJjMvfq3X+JTI/plKR8wIQJvCeoxjc+U9mfWPO63HS4GRueSLkiKrKf5XpEPmwc4i6Z9ZVQRM2G1J2hGo+6ISZEoMRRXTbHZtGMxQGqsV0heuMQ4ebxcjHjvmf8Zm4Qn76foLrHSNgBLqbB6/Tm9SJY1FjsDXp5aBLkHgYpT5szkQTA0Xm9Zur3fGSFeOjJCuwKhqoX2KXQwT2OF/rEmpQWBwHCvoq9HLW1I7uXZgAhfccmhXkUswoNIJZJjq0yNUWupdmSjkMPqQBz/dyJ3nEIWh7DYdd/NxSO1L+GOOtRhYq015GakjFVdJW5Wibs73dNu6q4zlkdWSq7VutTyqGEJJjw/Z8mSsF0LneT0nM+EGEN3aovLlyd9G7kRTZ/baq4YXmy2mauHUNPAt9z5jSWxZ5mHldfn5vp3xU+XXuiNUYCLgYX8z6Y2bggc9IRWiT5SZBd4/vfMBWRk6uFamPKPI6AYRYErGHeHsmohgtYyV2qWUfVZBqflGU5dpSlGnXX7/msO2oytSgrMs2xWWVspNwzbSg83sjcZiXw=
+    rooms:
+      secure: crNIo08lzOP05MEUg3B+riVPbI3K2Y56oQ4f9qaxQ4vod3MAYdSuWF9EbCvMKYM93eboHHXT+QecXLUs6QJ6m07komFawSCIPMnWTUYr0qHygCnV6wc7u+8rZyNeI4EgCn8vlb4/WjA6I3hOuQUSoVgti7LdNe2V0fXXHJiHiduqtSDG5RFIc79ceYUbZF+ouxlGY7IKQ8UZTozMQzl8Gmm4lVAYmBDlv7g9jM3Q8OqC0IOAh718413KtHH5cPfeGTsRspZOL5TxwYX61hrQAnXbecVOvV2R7nYkfwsDCR/xMj846egN1wrlwW1P65a18q2pMqpBryuhjxHR3jWm+WIxGqu5Is330umIbr80qFAYMPx6pE2pk3FUFFJfAfFSwDULRESAO8R99ZHSuy2RYDWiP9A4HwcXHFnzVjxrbctamZotNEBoRYEsc394BxF3i8ft3u2k/IBqiPCPXlmGKzIBK43Ou0AdRF/qbzZxIRCSJxcYV8S7+YeuaR6/5bb8uAJ9RfwkaoWOxjV03OE/nZSs/2kIyXKp0WmCfVmPTKx6NRqSldY5eyjP69nCFjQUZ4CTHOFvXh8ShExJ/p3oIrIIn1zH1teo80EokzrX5B4vb7ORWBZ4kHKzpei9+HVWFUIVLGFQtY8cz0E3wGaAeEPP7jcxv+C4H+YwVviMCDg=
+  email:
+  - bo.yang@emc.com
+  - eron.wright@emc.com
+  - flavio.junqueira@emc.com
+  - lida.he@emc.com
