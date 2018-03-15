@@ -75,3 +75,4 @@ Spark (verified with Spark 2.2.1 on Ubuntu 16.04)
 
 spark-submit --class io.pravega.examples.spark.WordCount build/libs/hadoop-connectors-0.3.0-SNAPSHOT-all.jar tcp://192.168.0.200:9090 myScope myStream
 ```
+
