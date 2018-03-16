@@ -68,7 +68,6 @@ dependencies {
 
     compileOnly group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion
     compileOnly group: 'org.apache.hadoop', name: 'hadoop-mapreduce-client-core', version: hadoopVersion
-    compileOnly group: 'org.apache.spark', name: 'spark-core_2.11', version: sparkVersion
 }
 
 test {
