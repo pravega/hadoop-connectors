@@ -18,27 +18,18 @@ import io.pravega.client.segment.impl.Segment;
 import io.pravega.connectors.hadoop.utils.IntegerSerializer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-
 import java.io.IOException;
-import java.net.URI;
 
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Mockito.*;
 
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(ClientFactory.class)
 public class PravegaInputRecordReaderTest {
 
     private static final String TEST_SCOPE = "PravegaInputRecordReaderTest";
@@ -54,11 +45,10 @@ public class PravegaInputRecordReaderTest {
 
     @Before
     public void setupTests() throws Exception {
-        mockClientFactoryStatic(TEST_SCOPE, TEST_URI);
-        mockTaskAttemptContextImpl();
-        reader = new PravegaInputRecordReader();
+        mockClientFactory = mockClientFactory();
+        reader = new PravegaInputRecordReader(mockClientFactory);
         split = new PravegaInputSplit(new Segment(TEST_SCOPE, TEST_STREAM, 10), 0, END_OFFSET);
-        TaskAttemptContext ctx = new TaskAttemptContextImpl(null, null);
+        TaskAttemptContext ctx = mockTaskAttemptContextImpl();
         reader.initialize(split, ctx);
         verify(ctx).getConfiguration();
         verify(mockBatchClient).readSegment(anyObject(), anyObject(), anyLong(), anyLong());
@@ -85,7 +75,7 @@ public class PravegaInputRecordReaderTest {
         verify(mockClientFactory).close();
     }
 
-    private void mockTaskAttemptContextImpl() throws Exception {
+    private TaskAttemptContext mockTaskAttemptContextImpl() throws Exception {
         Configuration conf = new Configuration();
         conf.setStrings(PravegaInputFormat.SCOPE_NAME, TEST_SCOPE);
         conf.setStrings(PravegaInputFormat.STREAM_NAME, TEST_STREAM);
@@ -93,14 +83,8 @@ public class PravegaInputRecordReaderTest {
         conf.setStrings(PravegaInputFormat.DESERIALIZER, IntegerSerializer.class.getName());
 
         TaskAttemptContextImpl mockTaskAttemptContextImpl = mock(TaskAttemptContextImpl.class);
-        PowerMockito.whenNew(TaskAttemptContextImpl.class).withArguments(any(Configuration.class), any(TaskAttemptID.class)).thenReturn(mockTaskAttemptContextImpl);
         Mockito.doReturn(conf).when(mockTaskAttemptContextImpl).getConfiguration();
-    }
-
-    private void mockClientFactoryStatic(String scope, String uri) {
-        PowerMockito.mockStatic(ClientFactory.class);
-        mockClientFactory = mockClientFactory();
-        PowerMockito.when(ClientFactory.withScope(scope, URI.create(uri))).thenReturn(mockClientFactory);
+        return mockTaskAttemptContextImpl;
     }
 
     private ClientFactory mockClientFactory() {

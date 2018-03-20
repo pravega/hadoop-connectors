@@ -21,41 +21,27 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-
 import java.io.IOException;
-import java.net.URI;
 import java.util.Iterator;
 import java.util.List;
 
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Mockito.mock;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(ClientFactory.class)
 public class PravegaInputFormatTest {
 
     private static final String TEST_SCOPE = "PravegaInputFormatTest";
     private static final String TEST_STREAM = "stream";
     private static final String TEST_URI = "tcp://127.0.0.1:9090";
 
-    @Before
-    public void setupTests() throws Exception {
-        mockClientFactoryStatic(TEST_SCOPE, TEST_URI);
-    }
-
     @Test
     public void testGetSplits() throws Exception {
         JobContext ctx = getJobContext();
         Configuration c = ctx.getConfiguration();
         Assert.assertNotNull(c);
-        PravegaInputFormat<Integer> inputFormat = new PravegaInputFormat();
+        PravegaInputFormat<Integer> inputFormat = new PravegaInputFormat(mockClientFactory());
         List<InputSplit> splits = inputFormat.getSplits(ctx);
         Assert.assertEquals(splits.size(), 3);
         int i = 0;
@@ -83,12 +69,6 @@ public class PravegaInputFormatTest {
         Job mockJob = mock(Job.class);
         Mockito.doReturn(conf).when(mockJob).getConfiguration();
         return mockJob;
-    }
-
-    private void mockClientFactoryStatic(String scope, String uri) {
-        PowerMockito.mockStatic(ClientFactory.class);
-        ClientFactory mockClientFactory = mockClientFactory();
-        PowerMockito.when(ClientFactory.withScope(scope, URI.create(uri))).thenReturn(mockClientFactory);
     }
 
     private ClientFactory mockClientFactory() {

@@ -10,6 +10,7 @@
 
 package io.pravega.connectors.hadoop;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.pravega.client.ClientFactory;
 import io.pravega.client.batch.BatchClient;
 import io.pravega.client.batch.SegmentIterator;
@@ -42,6 +43,13 @@ public class PravegaInputRecordReader<V> extends RecordReader<EventKey, V> {
     private EventKey key;
     private V value;
 
+    public PravegaInputRecordReader() {
+    }
+
+    @VisibleForTesting
+    public PravegaInputRecordReader(ClientFactory clientFactory) {
+        this.clientFactory = clientFactory;
+    }
 
     /**
      * Initializes RecordReader by InputSplit and TaskAttemptContext.
@@ -58,7 +66,9 @@ public class PravegaInputRecordReader<V> extends RecordReader<EventKey, V> {
 
     public void initialize(InputSplit split, Configuration conf) throws IOException, InterruptedException {
         this.split = (PravegaInputSplit) split;
-        clientFactory = ClientFactory.withScope(conf.get(PravegaInputFormat.SCOPE_NAME), URI.create(conf.get(PravegaInputFormat.URI_STRING)));
+        if (this.clientFactory == null) {
+            this.clientFactory = ClientFactory.withScope(conf.get(PravegaInputFormat.SCOPE_NAME), URI.create(conf.get(PravegaInputFormat.URI_STRING)));
+        }
         batchClient = clientFactory.createBatchClient();
         String deserializerClassName = conf.get(PravegaInputFormat.DESERIALIZER);
         try {
