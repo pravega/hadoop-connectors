@@ -72,7 +72,6 @@ public class PravegaInputRecordReaderTest {
     public void testClose() throws IOException {
         reader.close();
         verify(mockIterator).close();
-        verify(mockClientFactory).close();
     }
 
     private TaskAttemptContext mockTaskAttemptContextImpl() throws Exception {

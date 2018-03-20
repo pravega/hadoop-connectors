@@ -34,6 +34,7 @@ public class PravegaInputRecordReader<V> extends RecordReader<EventKey, V> {
 
     private static final Logger log = LoggerFactory.getLogger(PravegaInputRecordReader.class);
     private ClientFactory clientFactory;
+    private ClientFactory externalClientFactory;
     private BatchClient batchClient;
     private PravegaInputSplit split;
     private SegmentIterator<V> iterator;
@@ -47,8 +48,8 @@ public class PravegaInputRecordReader<V> extends RecordReader<EventKey, V> {
     }
 
     @VisibleForTesting
-    public PravegaInputRecordReader(ClientFactory clientFactory) {
-        this.clientFactory = clientFactory;
+    protected PravegaInputRecordReader(ClientFactory externalClientFactory) {
+        this.externalClientFactory = externalClientFactory;
     }
 
     /**
@@ -66,9 +67,9 @@ public class PravegaInputRecordReader<V> extends RecordReader<EventKey, V> {
 
     public void initialize(InputSplit split, Configuration conf) throws IOException, InterruptedException {
         this.split = (PravegaInputSplit) split;
-        if (this.clientFactory == null) {
-            this.clientFactory = ClientFactory.withScope(conf.get(PravegaInputFormat.SCOPE_NAME), URI.create(conf.get(PravegaInputFormat.URI_STRING)));
-        }
+
+        clientFactory = (externalClientFactory != null) ? externalClientFactory : ClientFactory.withScope(conf.get(PravegaInputFormat.SCOPE_NAME), URI.create(conf.get(PravegaInputFormat.URI_STRING)));
+
         batchClient = clientFactory.createBatchClient();
         String deserializerClassName = conf.get(PravegaInputFormat.DESERIALIZER);
         try {
@@ -126,7 +127,8 @@ public class PravegaInputRecordReader<V> extends RecordReader<EventKey, V> {
         if (iterator != null) {
             iterator.close();
         }
-        if (clientFactory != null) {
+        // clientFactory is created by myself, so close it
+        if (clientFactory != null && externalClientFactory == null) {
             clientFactory.close();
         }
     }

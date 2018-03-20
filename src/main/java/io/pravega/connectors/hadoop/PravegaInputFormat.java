@@ -44,14 +44,14 @@ public class PravegaInputFormat<V> extends InputFormat<EventKey, V> {
     // Pravega optional deserializer class name
     public static final String DESERIALIZER = "pravega.deserializer";
     // client factory
-    private ClientFactory clientFactory;
+    private ClientFactory externalClientFactory;
 
     public PravegaInputFormat() {
     }
 
     @VisibleForTesting
-    public PravegaInputFormat(ClientFactory clientFactory) {
-        this.clientFactory = clientFactory;
+    protected PravegaInputFormat(ClientFactory externalClientFactory) {
+        this.externalClientFactory = externalClientFactory;
     }
 
     /**
@@ -77,9 +77,8 @@ public class PravegaInputFormat<V> extends InputFormat<EventKey, V> {
         final String deserializerClassName = Optional.ofNullable(conf.get(PravegaInputFormat.DESERIALIZER)).orElseThrow(() ->
                 new IOException("The event deserializer must be configured (" + PravegaInputFormat.DESERIALIZER + ")"));
 
-        if (this.clientFactory == null) {
-            this.clientFactory = ClientFactory.withScope(scopeName, controllerURI);
-        }
+        ClientFactory clientFactory = (externalClientFactory != null) ? externalClientFactory : ClientFactory.withScope(scopeName, controllerURI);
+
         // generate a split per segment
         List<InputSplit> splits = new ArrayList<InputSplit>();
         BatchClient batchClient = clientFactory.createBatchClient();
@@ -89,8 +88,10 @@ public class PravegaInputFormat<V> extends InputFormat<EventKey, V> {
             PravegaInputSplit split = new PravegaInputSplit(segment, segInfo.getStartingOffset(), segInfo.getWriteOffset());
             splits.add(split);
         }
-        this.clientFactory.close();
-        this.clientFactory = null;
+        // close it only if it's created by myself
+        if (externalClientFactory == null) {
+            clientFactory.close();
+        }
         return splits;
     }
 
