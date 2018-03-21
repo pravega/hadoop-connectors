@@ -15,6 +15,7 @@ import io.pravega.client.ClientFactory;
 import io.pravega.client.admin.StreamManager;
 import io.pravega.client.stream.EventStreamWriter;
 import io.pravega.client.stream.EventWriterConfig;
+import io.pravega.client.stream.impl.JavaSerializer;
 import io.pravega.client.stream.ScalingPolicy;
 import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.local.InProcPravegaCluster;
@@ -39,6 +40,9 @@ public final class SetupUtils {
     // The test Scope name.
     @Getter
     private String scope;
+    // The controller port.
+    @Getter
+    private int controllerPort;
 
     /**
      * Start all pravega related services required for the test deployment.
@@ -54,7 +58,7 @@ public final class SetupUtils {
         }
 
         int zkPort = TestUtils.getAvailableListenPort();
-        int controllerPort = TestUtils.getAvailableListenPort();
+        controllerPort = TestUtils.getAvailableListenPort();
         int hostPort = TestUtils.getAvailableListenPort();
         int restPort = TestUtils.getAvailableListenPort();
 
@@ -141,6 +145,23 @@ public final class SetupUtils {
         return clientFactory.createEventWriter(
                 streamName,
                 new IntegerSerializer(),
+                EventWriterConfig.builder().build());
+    }
+
+    /**
+     * Create a stream writer for writing string events.
+     *
+     * @param streamName Name of the test stream.
+     * @return Stream writer instance.
+     */
+    public EventStreamWriter<String> getStringWriter(final String streamName) {
+        Preconditions.checkState(this.started.get(), "Services not yet started");
+        Preconditions.checkNotNull(streamName);
+
+        ClientFactory clientFactory = ClientFactory.withScope(this.scope, URI.create(getControllerUri()));
+        return clientFactory.createEventWriter(
+                streamName,
+                new JavaSerializer(),
                 EventWriterConfig.builder().build());
     }
 }

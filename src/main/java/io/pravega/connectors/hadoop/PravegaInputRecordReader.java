@@ -10,6 +10,7 @@
 
 package io.pravega.connectors.hadoop;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.pravega.client.ClientFactory;
 import io.pravega.client.batch.BatchClient;
 import io.pravega.client.batch.SegmentIterator;
@@ -33,6 +34,7 @@ public class PravegaInputRecordReader<V> extends RecordReader<EventKey, V> {
 
     private static final Logger log = LoggerFactory.getLogger(PravegaInputRecordReader.class);
     private ClientFactory clientFactory;
+    private ClientFactory externalClientFactory;
     private BatchClient batchClient;
     private PravegaInputSplit split;
     private SegmentIterator<V> iterator;
@@ -42,6 +44,13 @@ public class PravegaInputRecordReader<V> extends RecordReader<EventKey, V> {
     private EventKey key;
     private V value;
 
+    public PravegaInputRecordReader() {
+    }
+
+    @VisibleForTesting
+    protected PravegaInputRecordReader(ClientFactory externalClientFactory) {
+        this.externalClientFactory = externalClientFactory;
+    }
 
     /**
      * Initializes RecordReader by InputSplit and TaskAttemptContext.
@@ -58,7 +67,9 @@ public class PravegaInputRecordReader<V> extends RecordReader<EventKey, V> {
 
     public void initialize(InputSplit split, Configuration conf) throws IOException, InterruptedException {
         this.split = (PravegaInputSplit) split;
-        clientFactory = ClientFactory.withScope(conf.get(PravegaInputFormat.SCOPE_NAME), URI.create(conf.get(PravegaInputFormat.URI_STRING)));
+
+        clientFactory = (externalClientFactory != null) ? externalClientFactory : ClientFactory.withScope(conf.get(PravegaInputFormat.SCOPE_NAME), URI.create(conf.get(PravegaInputFormat.URI_STRING)));
+
         batchClient = clientFactory.createBatchClient();
         String deserializerClassName = conf.get(PravegaInputFormat.DESERIALIZER);
         try {
@@ -116,7 +127,8 @@ public class PravegaInputRecordReader<V> extends RecordReader<EventKey, V> {
         if (iterator != null) {
             iterator.close();
         }
-        if (clientFactory != null) {
+        // clientFactory is created by myself, so close it
+        if (clientFactory != null && externalClientFactory == null) {
             clientFactory.close();
         }
     }

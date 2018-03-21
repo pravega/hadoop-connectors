@@ -10,6 +10,7 @@
 
 package io.pravega.connectors.hadoop;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.pravega.client.ClientFactory;
 import io.pravega.client.batch.BatchClient;
 import io.pravega.client.batch.SegmentInfo;
@@ -42,6 +43,16 @@ public class PravegaInputFormat<V> extends InputFormat<EventKey, V> {
     public static final String URI_STRING = "pravega.uri";
     // Pravega optional deserializer class name
     public static final String DESERIALIZER = "pravega.deserializer";
+    // client factory
+    private ClientFactory externalClientFactory;
+
+    public PravegaInputFormat() {
+    }
+
+    @VisibleForTesting
+    protected PravegaInputFormat(ClientFactory externalClientFactory) {
+        this.externalClientFactory = externalClientFactory;
+    }
 
     /**
      * Generates splits which can be used by hadoop mapper to read pravega segments in parallel.
@@ -66,17 +77,20 @@ public class PravegaInputFormat<V> extends InputFormat<EventKey, V> {
         final String deserializerClassName = Optional.ofNullable(conf.get(PravegaInputFormat.DESERIALIZER)).orElseThrow(() ->
                 new IOException("The event deserializer must be configured (" + PravegaInputFormat.DESERIALIZER + ")"));
 
+        ClientFactory clientFactory = (externalClientFactory != null) ? externalClientFactory : ClientFactory.withScope(scopeName, controllerURI);
+
         // generate a split per segment
         List<InputSplit> splits = new ArrayList<InputSplit>();
-        try (ClientFactory clientFactory = ClientFactory.withScope(scopeName, controllerURI)) {
-            BatchClient batchClient = clientFactory.createBatchClient();
-
-            for (Iterator<SegmentInfo> iter = batchClient.listSegments(new StreamImpl(scopeName, streamName)); iter.hasNext(); ) {
-                SegmentInfo segInfo = iter.next();
-                Segment segment = segInfo.getSegment();
-                PravegaInputSplit split = new PravegaInputSplit(segment, segInfo.getStartingOffset(), segInfo.getWriteOffset());
-                splits.add(split);
-            }
+        BatchClient batchClient = clientFactory.createBatchClient();
+        for (Iterator<SegmentInfo> iter = batchClient.listSegments(new StreamImpl(scopeName, streamName)); iter.hasNext(); ) {
+            SegmentInfo segInfo = iter.next();
+            Segment segment = segInfo.getSegment();
+            PravegaInputSplit split = new PravegaInputSplit(segment, segInfo.getStartingOffset(), segInfo.getWriteOffset());
+            splits.add(split);
+        }
+        // close it only if it's created by myself
+        if (externalClientFactory == null) {
+            clientFactory.close();
         }
         return splits;
     }
