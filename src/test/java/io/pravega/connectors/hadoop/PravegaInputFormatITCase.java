@@ -10,6 +10,7 @@
 
 package io.pravega.connectors.hadoop;
 
+import io.pravega.client.ClientConfig;
 import io.pravega.client.stream.EventStreamWriter;
 import io.pravega.client.stream.Stream;
 import io.pravega.client.stream.impl.ControllerImpl;
@@ -56,8 +57,12 @@ public class PravegaInputFormatITCase {
         writer = SETUP_UTILS.getIntegerWriter(TEST_STREAM);
 
         executor = Executors.newSingleThreadScheduledExecutor();
-        controller = new ControllerImpl(URI.create("tcp://localhost:" + SETUP_UTILS.getControllerPort()),
-                ControllerImplConfig.builder().retryAttempts(1).build(), executor);
+        controller = new ControllerImpl(ControllerImplConfig.builder()
+            .clientConfig(
+                ClientConfig.builder()
+                    .controllerURI(URI.create("tcp://localhost:" + SETUP_UTILS.getControllerPort())).build())
+            .retryAttempts(1).build(),
+            executor);
     }
 
     @After

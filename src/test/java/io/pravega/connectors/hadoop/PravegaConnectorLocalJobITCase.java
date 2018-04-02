@@ -44,28 +44,14 @@ public class PravegaConnectorLocalJobITCase {
     private Path outputPath;
     private Job job;
     private FileSystem fs;
+    private EventStreamWriter<String> writer;
 
     @Before
     public void setUp() throws Exception {
         // setup pravega server
         SETUP_UTILS.startAllServices(TEST_SCOPE);
         SETUP_UTILS.createTestStream(TEST_STREAM, NUM_SEGMENTS);
-        EventStreamWriter<String> writer = SETUP_UTILS.getStringWriter(TEST_STREAM);
-        writer.writeEvent("pravega test");
-        writer.writeEvent("pravega job test");
-        writer.writeEvent("pravega local job test");
-
-        // setup local job runner
-        outputPath = new Path("src/test/java/io/pravega/connectors/hadoop/localjobrunnertestdir/");
-        Configuration conf = new Configuration();
-        conf.set("mapred.job.tracker", "local");
-        conf.set("fs.default.name", "file:///");
-
-        fs = FileSystem.getLocal(conf);
-        if (fs.exists(outputPath)) {
-            fs.delete(outputPath, true);
-        }
-        job = configureJob(conf, outputPath);
+        writer = SETUP_UTILS.getStringWriter(TEST_STREAM);
     }
 
     @After
@@ -78,16 +64,113 @@ public class PravegaConnectorLocalJobITCase {
 
     @Test
     public void testPravegaConnector() throws Exception {
+        // TEST 0: without start or end
+        writer.writeEvent("begin");
+        writer.writeEvent("pravega local job test");
+
+        // setup local job runner
+        outputPath = new Path("src/test/java/io/pravega/connectors/hadoop/localjobrunnertestdir/");
+        Configuration conf = new Configuration();
+        conf.set("mapred.job.tracker", "local");
+        conf.set("fs.default.name", "file:///");
+
+        fs = FileSystem.getLocal(conf);
+        if (fs.exists(outputPath)) {
+            fs.delete(outputPath, true);
+        }
+
+        job = configureJob(conf, outputPath);
         boolean status = job.waitForCompletion(true);
         Assert.assertTrue(job.isSuccessful());
 
         File output = new File(outputPath.toUri() + "/");
         Map<String, Integer> counts = getCounts(output);
 
-        Assert.assertEquals(new Integer(3), counts.get("pravega"));
+        Assert.assertEquals(new Integer(1), counts.get("begin"));
+        Assert.assertEquals(new Integer(1), counts.get("pravega"));
         Assert.assertEquals(new Integer(1), counts.get("local"));
-        Assert.assertEquals(new Integer(2), counts.get("job"));
-        Assert.assertEquals(new Integer(3), counts.get("test"));
+        Assert.assertEquals(new Integer(1), counts.get("job"));
+        Assert.assertEquals(new Integer(1), counts.get("test"));
+
+        // TEST 1: with end position only
+        writer.writeEvent("streamcut1 endonly");
+
+        fs = FileSystem.getLocal(conf);
+        if (fs.exists(outputPath)) {
+            fs.delete(outputPath, true);
+        }
+
+        String endPos1 = PravegaInputFormat.fetchLatestPositionsJson(
+                SETUP_UTILS.getControllerUri(), TEST_SCOPE, TEST_STREAM);
+
+        // won't be read because it's written after end poisitions are fetched
+        writer.writeEvent("onemore");
+
+        job = configureJob(conf, outputPath, "", endPos1);
+        status = job.waitForCompletion(true);
+        Assert.assertTrue(job.isSuccessful());
+
+        output = new File(outputPath.toUri() + "/");
+        counts = getCounts(output);
+
+        Assert.assertEquals(null, counts.get("onemore"));
+        Assert.assertEquals(new Integer(1), counts.get("begin"));
+        Assert.assertEquals(new Integer(1), counts.get("pravega"));
+        Assert.assertEquals(new Integer(1), counts.get("local"));
+        Assert.assertEquals(new Integer(1), counts.get("job"));
+        Assert.assertEquals(new Integer(1), counts.get("test"));
+        Assert.assertEquals(new Integer(1), counts.get("streamcut1"));
+        Assert.assertEquals(new Integer(1), counts.get("endonly"));
+
+        // TEST 2: with both start and end positions
+        writer.writeEvent("streamcut2 startandend");
+
+        fs = FileSystem.getLocal(conf);
+        if (fs.exists(outputPath)) {
+            fs.delete(outputPath, true);
+        }
+
+        String endPos2 = PravegaInputFormat.fetchLatestPositionsJson(
+                SETUP_UTILS.getControllerUri(), TEST_SCOPE, TEST_STREAM);
+
+        // won't be read because it's written after end poisitions are fetched
+        writer.writeEvent("twomore");
+
+        job = configureJob(conf, outputPath, endPos1, endPos2);
+        status = job.waitForCompletion(true);
+        Assert.assertTrue(job.isSuccessful());
+
+        output = new File(outputPath.toUri() + "/");
+        counts = getCounts(output);
+        Assert.assertEquals(3, counts.size());
+        Assert.assertEquals(new Integer(1), counts.get("streamcut2"));
+        Assert.assertEquals(new Integer(1), counts.get("startandend"));
+        Assert.assertEquals(new Integer(1), counts.get("onemore"));
+
+        // TEST 3: with start positions only
+        writer.writeEvent("streamcut3 startonly");
+
+        fs = FileSystem.getLocal(conf);
+        if (fs.exists(outputPath)) {
+            fs.delete(outputPath, true);
+        }
+
+        job = configureJob(conf, outputPath, endPos2, "");
+        status = job.waitForCompletion(true);
+        Assert.assertTrue(job.isSuccessful());
+
+        output = new File(outputPath.toUri() + "/");
+        counts = getCounts(output);
+        Assert.assertEquals(3, counts.size());
+        Assert.assertEquals(new Integer(1), counts.get("twomore"));
+        Assert.assertEquals(new Integer(1), counts.get("streamcut3"));
+        Assert.assertEquals(new Integer(1), counts.get("startonly"));
+    }
+
+    private Job configureJob(Configuration conf, Path outputPath, String startPos, String endPos) throws Exception {
+        conf.setStrings(PravegaInputFormat.START_POSITIONS, startPos);
+        conf.setStrings(PravegaInputFormat.END_POSITIONS, endPos);
+        return configureJob(conf, outputPath);
     }
 
     private Job configureJob(Configuration conf, Path outputPath) throws Exception {

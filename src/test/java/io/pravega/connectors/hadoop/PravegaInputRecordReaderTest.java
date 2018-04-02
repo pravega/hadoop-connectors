@@ -10,6 +10,8 @@
 
 package io.pravega.connectors.hadoop;
 
+import io.pravega.client.batch.SegmentRange;
+import io.pravega.client.batch.impl.SegmentRangeImpl;
 import io.pravega.client.ClientFactory;
 import io.pravega.client.batch.BatchClient;
 import io.pravega.client.batch.SegmentIterator;
@@ -25,7 +27,6 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import java.io.IOException;
 
-import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Mockito.*;
 
@@ -38,6 +39,7 @@ public class PravegaInputRecordReaderTest {
     private static final Long END_OFFSET = 100L;
 
     private PravegaInputRecordReader<Integer> reader;
+    private Segment segment;
     private PravegaInputSplit split;
     private ClientFactory mockClientFactory;
     private SegmentIterator<Integer> mockIterator;
@@ -47,18 +49,21 @@ public class PravegaInputRecordReaderTest {
     public void setupTests() throws Exception {
         mockClientFactory = mockClientFactory();
         reader = new PravegaInputRecordReader(mockClientFactory);
-        split = new PravegaInputSplit(new Segment(TEST_SCOPE, TEST_STREAM, 10), 0, END_OFFSET);
+        segment = new Segment(TEST_SCOPE, TEST_STREAM, 10);
+        SegmentRange segmentRange = SegmentRangeImpl.builder().segment(segment)
+            .startOffset(0).endOffset(END_OFFSET).build();
+        split = new PravegaInputSplit(segmentRange);
         TaskAttemptContext ctx = mockTaskAttemptContextImpl();
         reader.initialize(split, ctx);
         verify(ctx).getConfiguration();
-        verify(mockBatchClient).readSegment(anyObject(), anyObject(), anyLong(), anyLong());
+        verify(mockBatchClient).readSegment(anyObject(), anyObject());
     }
 
     @Test
     public void testKeyValue() throws IOException, InterruptedException {
         int i = 0;
         while (reader.nextKeyValue()) {
-            Assert.assertTrue(0 == reader.getCurrentKey().compareTo(new EventKey(split, 4 * i)));
+            Assert.assertTrue(0 == reader.getCurrentKey().compareTo(new EventKey(segment, 4 * i)));
             Assert.assertTrue(reader.getCurrentValue() == 10 * (i + 1));
             Assert.assertTrue(reader.getProgress() == ((float) (4 * i - 0)) / END_OFFSET);
             i++;
@@ -96,7 +101,7 @@ public class PravegaInputRecordReaderTest {
     private BatchClient mockBatchClient() {
         BatchClient mockBatchClient = mock(BatchClient.class);
         mockIterator = mockIterator();
-        Mockito.doReturn(mockIterator).when(mockBatchClient).readSegment(anyObject(), anyObject(), anyLong(), anyLong());
+        Mockito.doReturn(mockIterator).when(mockBatchClient).readSegment(anyObject(), anyObject());
         return mockBatchClient;
     }
 

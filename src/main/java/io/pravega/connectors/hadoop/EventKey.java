@@ -10,8 +10,9 @@
 
 package io.pravega.connectors.hadoop;
 
+import io.pravega.client.segment.impl.Segment;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
-import org.apache.hadoop.io.WritableUtils;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -25,7 +26,7 @@ import javax.annotation.concurrent.NotThreadSafe;
 @NotThreadSafe
 public class EventKey implements WritableComparable<EventKey> {
 
-    private PravegaInputSplit split;
+    private Segment segment;
     private long offset;
 
     /**
@@ -34,8 +35,8 @@ public class EventKey implements WritableComparable<EventKey> {
     public EventKey() {
     }
 
-    public EventKey(PravegaInputSplit split, long offset) {
-        this.split = split;
+    public EventKey(Segment segment, long offset) {
+        this.segment = segment;
         this.offset = offset;
     }
 
@@ -48,11 +49,11 @@ public class EventKey implements WritableComparable<EventKey> {
     }
 
     /**
-     * Gets the input split associated with the event.
-     * @return split in key
+     * Gets the segment associated with the event.
+     * @return segment in key
      */
-    public PravegaInputSplit getSplit() {
-        return split;
+    public Segment getSegment() {
+        return segment;
     }
 
     /**
@@ -60,8 +61,8 @@ public class EventKey implements WritableComparable<EventKey> {
      */
     @Override
     public void write(DataOutput out) throws IOException {
-        split.write(out);
-        WritableUtils.writeVLong(out, getOffset());
+        Text.writeString(out, segment.getScopedName());
+        out.writeLong(getOffset());
     }
 
     /**
@@ -69,9 +70,8 @@ public class EventKey implements WritableComparable<EventKey> {
      */
     @Override
     public void readFields(DataInput in) throws IOException {
-        split = new PravegaInputSplit();
-        split.readFields(in);
-        offset = WritableUtils.readVLong(in);
+        segment = Segment.fromScopedName(Text.readString(in));
+        offset = in.readLong();
     }
 
     /**
@@ -79,7 +79,7 @@ public class EventKey implements WritableComparable<EventKey> {
      */
     @Override
     public int compareTo(EventKey o) {
-        int res = split.compareTo(o.getSplit());
+        int res = segment.compareTo(o.getSegment());
         if (res == 0) {
             res = Long.compare(offset, o.getOffset());
         }
@@ -91,6 +91,6 @@ public class EventKey implements WritableComparable<EventKey> {
      */
     @Override
     public String toString() {
-        return String.format("%s:%s", split.toString(), String.valueOf(getOffset()));
+        return String.format("%s:%s", segment.toString(), String.valueOf(getOffset()));
     }
 }
