@@ -11,12 +11,23 @@
 package io.pravega.connectors.hadoop.utils;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+import io.pravega.client.ClientConfig;
 import io.pravega.client.ClientFactory;
+import io.pravega.client.admin.ReaderGroupManager;
 import io.pravega.client.admin.StreamManager;
+import io.pravega.client.segment.impl.Segment;
+import io.pravega.client.stream.EventStreamReader;
 import io.pravega.client.stream.EventStreamWriter;
 import io.pravega.client.stream.EventWriterConfig;
+import io.pravega.client.stream.impl.DefaultCredentials;
 import io.pravega.client.stream.impl.JavaSerializer;
+import io.pravega.client.stream.impl.StreamCutImpl;
+import io.pravega.client.stream.ReaderConfig;
+import io.pravega.client.stream.ReaderGroupConfig;
 import io.pravega.client.stream.ScalingPolicy;
+import io.pravega.client.stream.Stream;
+import io.pravega.client.stream.StreamCut;
 import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.local.InProcPravegaCluster;
 import lombok.Cleanup;
@@ -26,6 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 import javax.annotation.concurrent.NotThreadSafe;
 import java.net.URI;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.UUID;
 
 /**
  * Utility functions for creating the test setup.
@@ -168,5 +180,46 @@ public final class SetupUtils {
                 streamName,
                 new JavaSerializer(),
                 EventWriterConfig.builder().build());
+    }
+
+    /**
+     * Create a stream reader for reading string events.
+     *
+     * @param streamName Name of the test stream.
+     * @return Stream reader instance.
+     */
+    public EventStreamReader<String> getStringReader(final String streamName) {
+        Preconditions.checkState(this.started.get(), "Services not yet started");
+        Preconditions.checkNotNull(streamName);
+
+        ReaderGroupManager readerGroupManager = ReaderGroupManager.withScope(this.scope, getClientConfig());
+        final String readerGroup = "testReaderGroup" + this.scope + streamName;
+        Stream stream = Stream.of(this.scope, streamName);
+        readerGroupManager.createReaderGroup(
+                readerGroup,
+                //ReaderGroupConfig.builder().stream(stream, getStreamCut(streamName, 0L)).build());
+                ReaderGroupConfig.builder().stream(stream).build());
+
+        ClientFactory clientFactory = ClientFactory.withScope(this.scope, getClientConfig());
+        final String readerGroupId = UUID.randomUUID().toString();
+        return clientFactory.createReader(
+                readerGroupId,
+                readerGroup,
+                new JavaSerializer<String>(),
+                ReaderConfig.builder().build());
+    }
+
+
+    public ClientConfig getClientConfig() {
+        return ClientConfig.builder()
+                .controllerURI(URI.create(getControllerUri()))
+                .credentials(new DefaultCredentials("", ""))
+                .build();
+    }
+
+    private StreamCut getStreamCut(String streamName, long offset) {
+        ImmutableMap<Segment, Long> positions = ImmutableMap.<Segment, Long>builder().put(new Segment(this.scope,
+                streamName, 0), offset).build();
+        return new StreamCutImpl(Stream.of(this.scope, streamName), positions);
     }
 }
