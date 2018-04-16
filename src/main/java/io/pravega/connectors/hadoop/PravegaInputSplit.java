@@ -65,7 +65,7 @@ public class PravegaInputSplit extends InputSplit implements WritableComparable<
      */
     @Override
     public void write(DataOutput out) throws IOException {
-        Text.writeString(out, this.segmentRange.getScopeName());
+        Text.writeString(out, this.segmentRange.getScope());
         Text.writeString(out, this.segmentRange.getStreamName());
         out.writeInt(this.segmentRange.getSegmentNumber());
         out.writeLong(this.segmentRange.getStartOffset());
@@ -88,7 +88,7 @@ public class PravegaInputSplit extends InputSplit implements WritableComparable<
     }
 
     public Segment getSegment() {
-        return new Segment(segmentRange.getScopeName(), segmentRange.getStreamName(), segmentRange.getSegmentNumber());
+        return new Segment(segmentRange.getScope(), segmentRange.getStreamName(), segmentRange.getSegmentNumber());
     }
 
     public SegmentRange getSegmentRange() {
