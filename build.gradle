@@ -57,6 +57,12 @@ repositories {
     }
 }
 
+configurations.all {
+    resolutionStrategy {
+        force 'io.netty:netty-tcnative-boringssl-static:2.0.8.Final'
+    }
+}
+
 dependencies {
     compile(group: 'io.pravega', name: 'pravega-client', version: pravegaVersion) {
         exclude group: 'org.slf4j', module: 'slf4j-api'
