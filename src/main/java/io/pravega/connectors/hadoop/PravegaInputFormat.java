@@ -21,7 +21,7 @@ import io.pravega.client.batch.BatchClient;
 import io.pravega.client.batch.StreamSegmentsIterator;
 import io.pravega.client.batch.SegmentRange;
 import io.pravega.client.segment.impl.Segment;
-import io.pravega.client.stream.impl.StreamImpl;
+import io.pravega.client.stream.Stream;
 import io.pravega.client.stream.StreamCut;
 import io.pravega.client.stream.impl.StreamCutImpl;
 import org.apache.hadoop.conf.Configuration;
@@ -106,7 +106,7 @@ public class PravegaInputFormat<V> extends InputFormat<EventKey, V> {
         // generate a split per segment
         List<InputSplit> splits = new ArrayList<InputSplit>();
         BatchClient batchClient = clientFactory.createBatchClient();
-        Iterator<SegmentRange> iter = batchClient.getSegments(new StreamImpl(scopeName, streamName), startStreamCut, endStreamCut).getIterator();
+        Iterator<SegmentRange> iter = batchClient.getSegments(Stream.of(scopeName, streamName), startStreamCut, endStreamCut).getIterator();
         while (iter.hasNext()) {
             SegmentRange sr = iter.next();
             PravegaInputSplit split = new PravegaInputSplit(sr);
@@ -139,7 +139,7 @@ public class PravegaInputFormat<V> extends InputFormat<EventKey, V> {
     @VisibleForTesting
     public static String fetchPositionsJson(ClientFactory clientFactory, String scopeName, String streamName) throws IOException {
         BatchClient batchClient = clientFactory.createBatchClient();
-        StreamSegmentsIterator ssIter = batchClient.getSegments(new StreamImpl(scopeName, streamName), null, null);
+        StreamSegmentsIterator ssIter = batchClient.getSegments(Stream.of(scopeName, streamName), null, null);
         StreamCut endStreamCut = ssIter.getEndStreamCut();
 
         Gson gson = new GsonBuilder()
@@ -159,7 +159,7 @@ public class PravegaInputFormat<V> extends InputFormat<EventKey, V> {
         Type type = new TypeToken<Map<Segment, Long>>() { }.getType();
         Map<Segment, Long> positions = gson.fromJson(s, type);
 
-        sc = new StreamCutImpl(new StreamImpl(scopeName, streamName), positions);
+        sc = new StreamCutImpl(Stream.of(scopeName, streamName), positions);
         return sc;
     }
 }
