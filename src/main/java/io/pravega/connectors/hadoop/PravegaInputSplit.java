@@ -87,19 +87,19 @@ public class PravegaInputSplit extends InputSplit implements WritableComparable<
         return res;
     }
 
-    public Segment getSegment() {
+    protected Segment getSegment() {
         return new Segment(segmentRange.getScope(), segmentRange.getStreamName(), segmentRange.getSegmentNumber());
     }
 
-    public SegmentRange getSegmentRange() {
+    protected SegmentRange getSegmentRange() {
         return segmentRange;
     }
 
-    public long getStartOffset() {
+    protected long getStartOffset() {
         return segmentRange.getStartOffset();
     }
 
-    public long getEndOffset() {
+    protected long getEndOffset() {
         return segmentRange.getEndOffset();
     }
 
