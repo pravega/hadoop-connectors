@@ -10,6 +10,8 @@
 
 package io.pravega.connectors.hadoop;
 
+import io.pravega.client.batch.SegmentRange;
+import io.pravega.client.batch.impl.SegmentRangeImpl;
 import io.pravega.client.segment.impl.Segment;
 import org.junit.Assert;
 import org.junit.Before;
@@ -34,14 +36,20 @@ public class PravegaInputSplitTest {
     @Before
     public void setUp() {
         segment = new Segment(TEST_SCOPE, TEST_STREAM, 10);
-        split = new PravegaInputSplit(segment, 1, 100);
+        SegmentRange segmentRange = SegmentRangeImpl.builder()
+            .segment(segment)
+            .startOffset(1)
+            .endOffset(100).build();
+
+        split = new PravegaInputSplit(segmentRange);
     }
 
     @Test
-    public void testPravegaInputSplitGet() throws IOException {
+    public void testPravegaInputSplitGet() throws IOException, InterruptedException {
         Assert.assertEquals(1, split.getStartOffset());
         Assert.assertEquals(100, split.getEndOffset());
-        Assert.assertEquals(segment, split.getSegment());
+        Assert.assertEquals(99, split.getLength());
+        Assert.assertEquals(0, segment.compareTo(split.getSegment()));
     }
 
     @Test
@@ -54,21 +62,29 @@ public class PravegaInputSplitTest {
         inSplit.readFields(in);
         byteOutput.close();
 
-        Assert.assertEquals(0, split.getSegment().compareTo(inSplit.getSegment()));
-        Assert.assertEquals(split.getStartOffset(), inSplit.getStartOffset());
-        Assert.assertEquals(split.getEndOffset(), inSplit.getEndOffset());
+        Assert.assertEquals(0, split.compareTo(inSplit));
     }
 
     @Test
     public void testPravegaInputSplitComparable() throws IOException {
         Segment segment1 = new Segment(TEST_SCOPE, TEST_STREAM, 10);
-        PravegaInputSplit split1 = new PravegaInputSplit(segment1, 50, 70);
+        SegmentRange segmentRange1 = SegmentRangeImpl.builder()
+            .segment(segment1)
+            .startOffset(50)
+            .endOffset(70).build();
+        PravegaInputSplit split1 = new PravegaInputSplit(segmentRange1);
 
         for (int seg = 9; seg <= 11; seg++) {
             for (long start = 49; start <= 51; start++) {
                 for (long end = 69; end <= 71; end++) {
+
                     Segment segment2 = new Segment(TEST_SCOPE, TEST_STREAM, seg);
-                    PravegaInputSplit split2 = new PravegaInputSplit(segment2, start, end);
+                    SegmentRange segmentRange2 = SegmentRangeImpl.builder()
+                        .segment(segment2)
+                        .startOffset(start)
+                        .endOffset(end).build();
+                    PravegaInputSplit split2 = new PravegaInputSplit(segmentRange2);
+
                     if (segment1.compareTo(segment2) == 0) {
                         if (50 == start) {
                             Assert.assertTrue(split1.compareTo(split2) == Long.compare(70, end));

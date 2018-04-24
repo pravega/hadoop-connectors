@@ -41,6 +41,15 @@ Usage
 -----
 ```
         Configuration conf = new Configuration();
+
+        // optional to set start and end positions
+        // generally, start positions are set to the end positions in previous job,
+        // so only new generated events will be processed, otherwise, start from very beginning if not set
+        conf.setStrings(PravegaInputFormat.START_POSITIONS, startPos);
+        // fetch end positions
+        String endPos = PravegaInputFormat.fetchLatestPositionsJson("tcp://127.0.0.1:9090", "myScope", "myStream");
+        conf.setStrings(PravegaInputFormat.END_POSITIONS, endPos);
+
         conf.setStrings(PravegaInputFormat.SCOPE_NAME, "myScope");
         conf.setStrings(PravegaInputFormat.STREAM_NAME, "myStream");
         conf.setStrings(PravegaInputFormat.URI_STRING, "tcp://127.0.0.1:9090");

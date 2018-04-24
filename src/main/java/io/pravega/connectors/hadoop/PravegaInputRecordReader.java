@@ -79,7 +79,7 @@ public class PravegaInputRecordReader<V> extends RecordReader<EventKey, V> {
             log.error("Exception when creating deserializer: {}", e);
             throw new IOException("Unable to create the event deserializer (" + deserializerClassName + ")", e);
         }
-        iterator = batchClient.readSegment(this.split.getSegment(), deserializer, this.split.getStartOffset(), this.split.getEndOffset());
+        iterator = batchClient.readSegment(this.split.getSegmentRange(), deserializer);
     }
 
     /**
@@ -90,7 +90,7 @@ public class PravegaInputRecordReader<V> extends RecordReader<EventKey, V> {
     @Override
     public synchronized boolean nextKeyValue() throws IOException, InterruptedException {
         if (iterator.hasNext()) {
-            key = new EventKey(split, iterator.getOffset());
+            key = new EventKey(split.getSegment(), iterator.getOffset());
             value = iterator.next();
             log.debug("Key: {}, Value: {} ({})", key, value, value.getClass().getName());
             return true;

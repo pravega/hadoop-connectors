@@ -10,10 +10,15 @@
 
 package io.pravega.connectors.hadoop;
 
-import io.pravega.client.ClientFactory;
+import io.pravega.client.batch.SegmentRange;
+import io.pravega.client.batch.StreamSegmentsIterator;
+import io.pravega.client.batch.impl.SegmentRangeImpl;
 import io.pravega.client.batch.BatchClient;
-import io.pravega.client.batch.SegmentInfo;
+import io.pravega.client.ClientFactory;
 import io.pravega.client.segment.impl.Segment;
+import io.pravega.client.stream.Stream;
+import io.pravega.client.stream.impl.StreamImpl;
+import io.pravega.client.stream.impl.StreamCutImpl;
 import io.pravega.connectors.hadoop.utils.IntegerSerializer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -24,8 +29,15 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
+import java.lang.reflect.Type;
 
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Mockito.mock;
@@ -49,7 +61,10 @@ public class PravegaInputFormatTest {
             Assert.assertTrue(s instanceof PravegaInputSplit);
             PravegaInputSplit ps = (PravegaInputSplit) s;
             i++;
-            Assert.assertTrue(0 == ps.compareTo(new PravegaInputSplit(new Segment(TEST_SCOPE, TEST_STREAM, i), 0, 100 * i)));
+            Segment segment = new Segment(TEST_SCOPE, TEST_STREAM, i);
+            SegmentRange segmentRange = SegmentRangeImpl.builder().
+                segment(segment).startOffset(0).endOffset(100 * i).build();
+            Assert.assertTrue(0 == ps.compareTo(new PravegaInputSplit(segmentRange)));
         }
     }
 
@@ -58,6 +73,28 @@ public class PravegaInputFormatTest {
         PravegaInputFormat<Integer> inputFormat = new PravegaInputFormat();
         RecordReader<?, ?> reader = inputFormat.createRecordReader(null, null);
         Assert.assertTrue(reader instanceof PravegaInputRecordReader);
+    }
+
+    @Test
+    public void testFetchPositionsJson() throws IOException {
+        Map<Segment, Long> origPositions = genPositions(10);
+        ClientFactory clientFactory = mockClientFactory();
+        String json = PravegaInputFormat.fetchPositionsJson(clientFactory, TEST_SCOPE, TEST_STREAM);
+        Assert.assertFalse(json.isEmpty());
+
+        Gson gson = new GsonBuilder()
+            .enableComplexMapKeySerialization().create();
+
+        Type type = new TypeToken<Map<Segment, Long>>() { }.getType();
+        Map<Segment, Long> parsedPositions = gson.fromJson(json, type);
+
+        Assert.assertEquals(origPositions.size(), parsedPositions.size());
+        for (Map.Entry<Segment, Long> entry : parsedPositions.entrySet()) {
+            Segment key = entry.getKey();
+            Long value = entry.getValue();
+            Assert.assertTrue(origPositions.containsKey(key));
+            Assert.assertEquals(value, origPositions.get(key));
+        }
     }
 
     private JobContext getJobContext() throws Exception {
@@ -80,18 +117,37 @@ public class PravegaInputFormatTest {
 
     private BatchClient mockBatchClient() {
         BatchClient mockBatchClient = mock(BatchClient.class);
-        Iterator<SegmentInfo> mockIterator = mockIterator();
-        Mockito.doReturn(mockIterator).when(mockBatchClient).listSegments(anyObject());
+        StreamSegmentsIterator mockStreamSegmentsIterator = mockStreamSegmentsIterator();
+        Mockito.doReturn(mockStreamSegmentsIterator).when(mockBatchClient)
+            .getSegments(anyObject(), anyObject(), anyObject());
         return mockBatchClient;
     }
 
-    private Iterator<SegmentInfo> mockIterator() {
-        Iterator<SegmentInfo> mockIterator = mock(Iterator.class);
+    private StreamSegmentsIterator mockStreamSegmentsIterator() {
+        StreamSegmentsIterator mockStreamSegmentsIterator = mock(StreamSegmentsIterator.class);
+        Mockito.doReturn(mockIterator()).when(mockStreamSegmentsIterator).getIterator();
+        Stream s = new StreamImpl(TEST_SCOPE, TEST_STREAM);
+        StreamCutImpl sc = new StreamCutImpl(s, genPositions(10));
+        Mockito.doReturn(sc).when(mockStreamSegmentsIterator).getEndStreamCut();
+        return mockStreamSegmentsIterator;
+    }
+
+    private Iterator<SegmentRange> mockIterator() {
+        Iterator<SegmentRange> mockIterator = mock(Iterator.class);
         Mockito.when(mockIterator.hasNext()).thenReturn(true, true, true, false);
         Mockito.when(mockIterator.next()).thenReturn(
-                new SegmentInfo(new Segment(TEST_SCOPE, TEST_STREAM, 1), 0, 100, false, System.currentTimeMillis()),
-                new SegmentInfo(new Segment(TEST_SCOPE, TEST_STREAM, 2), 0, 200, false, System.currentTimeMillis()),
-                new SegmentInfo(new Segment(TEST_SCOPE, TEST_STREAM, 3), 0, 300, false, System.currentTimeMillis()));
+                SegmentRangeImpl.builder().segment(new Segment(TEST_SCOPE, TEST_STREAM, 1)).startOffset(0).endOffset(100).build(),
+                SegmentRangeImpl.builder().segment(new Segment(TEST_SCOPE, TEST_STREAM, 2)).startOffset(0).endOffset(200).build(),
+                SegmentRangeImpl.builder().segment(new Segment(TEST_SCOPE, TEST_STREAM, 3)).startOffset(0).endOffset(300).build());
         return mockIterator;
     }
+
+    private Map<Segment, Long> genPositions(int n) {
+        Map<Segment, Long> positions = new HashMap<>();
+        for (int i = 0; i < n; i++) {
+            positions.put(new Segment(TEST_SCOPE, TEST_STREAM, i), 10L * (i+1));
+        }
+        return positions;
+    }
+
 }

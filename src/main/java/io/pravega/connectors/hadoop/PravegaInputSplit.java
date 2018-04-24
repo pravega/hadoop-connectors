@@ -10,9 +10,11 @@
 
 package io.pravega.connectors.hadoop;
 
+import io.pravega.client.batch.SegmentRange;
+import io.pravega.client.batch.impl.SegmentRangeImpl;
 import io.pravega.client.segment.impl.Segment;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputSplit;
 
 import java.io.DataInput;
@@ -26,12 +28,8 @@ import javax.annotation.concurrent.NotThreadSafe;
 @NotThreadSafe
 public class PravegaInputSplit extends InputSplit implements WritableComparable<PravegaInputSplit> {
 
-    // Pravega segment
-    private Segment segment;
-    // start offset in the segment
-    private long startOffset;
-    // end offset in the segment
-    private long endOffset;
+    // Pravega SegmentRange
+    private SegmentRange segmentRange;
 
     // Needed for reflection instantiation: Writable interface
     public PravegaInputSplit() {
@@ -40,14 +38,10 @@ public class PravegaInputSplit extends InputSplit implements WritableComparable<
     /**
      * Creates an InputSplit corresponding to a Pravega segment.
      *
-     * @param segment     The pravega segment
-     * @param startOffset start offset in the segment
-     * @param endOffset   end offset in the segment
+     * @param segmentRange     The pravega SegmentRange
      */
-    public PravegaInputSplit(Segment segment, long startOffset, long endOffset) {
-        this.segment = segment;
-        this.startOffset = startOffset;
-        this.endOffset = endOffset;
+    public PravegaInputSplit(SegmentRange segmentRange) {
+        this.segmentRange = segmentRange;
     }
 
     /**
@@ -55,9 +49,15 @@ public class PravegaInputSplit extends InputSplit implements WritableComparable<
      */
     @Override
     public void readFields(DataInput in) throws IOException {
-        segment = Segment.fromScopedName(Text.readString(in));
-        startOffset = in.readLong();
-        endOffset = in.readLong();
+        String scopeName = Text.readString(in);
+        String streamName = Text.readString(in);
+        int segmentNumber = in.readInt();
+        long startOffset = in.readLong();
+        long endOffset = in.readLong();
+        this.segmentRange = SegmentRangeImpl.builder()
+            .segment(new Segment(scopeName, streamName, segmentNumber))
+            .startOffset(startOffset)
+            .endOffset(endOffset).build();
     }
 
     /**
@@ -65,9 +65,11 @@ public class PravegaInputSplit extends InputSplit implements WritableComparable<
      */
     @Override
     public void write(DataOutput out) throws IOException {
-        Text.writeString(out, segment.getScopedName());
-        out.writeLong(startOffset);
-        out.writeLong(endOffset);
+        Text.writeString(out, this.segmentRange.getScope());
+        Text.writeString(out, this.segmentRange.getStreamName());
+        out.writeInt(this.segmentRange.getSegmentNumber());
+        out.writeLong(this.segmentRange.getStartOffset());
+        out.writeLong(this.segmentRange.getEndOffset());
     }
 
     /**
@@ -75,31 +77,35 @@ public class PravegaInputSplit extends InputSplit implements WritableComparable<
      */
     @Override
     public int compareTo(PravegaInputSplit o) {
-        int res = segment.compareTo(o.getSegment());
+        int res = this.getSegment().compareTo(o.getSegment());
         if (res == 0) {
-            res = Long.compare(startOffset, o.getStartOffset());
+            res = Long.compare(this.getStartOffset(), o.getStartOffset());
         }
         if (res == 0) {
-            res = Long.compare(endOffset, o.getEndOffset());
+            res = Long.compare(this.getEndOffset(), o.getEndOffset());
         }
         return res;
     }
 
-    public Segment getSegment() {
-        return segment;
+    protected Segment getSegment() {
+        return new Segment(segmentRange.getScope(), segmentRange.getStreamName(), segmentRange.getSegmentNumber());
     }
 
-    public long getStartOffset() {
-        return startOffset;
+    protected SegmentRange getSegmentRange() {
+        return segmentRange;
     }
 
-    public long getEndOffset() {
-        return endOffset;
+    protected long getStartOffset() {
+        return segmentRange.getStartOffset();
+    }
+
+    protected long getEndOffset() {
+        return segmentRange.getEndOffset();
     }
 
     @Override
     public long getLength() throws IOException, InterruptedException {
-        return endOffset - startOffset;
+        return getEndOffset() - getStartOffset();
     }
 
     @Override
@@ -109,6 +115,6 @@ public class PravegaInputSplit extends InputSplit implements WritableComparable<
 
     @Override
     public String toString() {
-        return String.format("%s:%s:%s", segment.getScopedName(), String.valueOf(getStartOffset()), String.valueOf(getEndOffset()));
+        return segmentRange.toString();
     }
 }

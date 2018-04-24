@@ -29,20 +29,18 @@ public class EventKeyTest {
     private static final String TEST_STREAM = "stream";
 
     private Segment segment;
-    private PravegaInputSplit split;
     private EventKey key;
 
     @Before
     public void setUp() {
         segment = new Segment(TEST_SCOPE, TEST_STREAM, 10);
-        split = new PravegaInputSplit(segment, 1, 100);
-        key = new EventKey(split, 5L);
+        key = new EventKey(segment, 5L);
     }
 
     @Test
     public void testEventKey() {
         Assert.assertEquals(5L, key.getOffset());
-        Assert.assertEquals(split, key.getSplit());
+        Assert.assertEquals(segment, key.getSegment());
     }
 
     @Test
@@ -55,27 +53,23 @@ public class EventKeyTest {
         inKey.readFields(in);
         byteOutput.close();
 
-        Assert.assertEquals(0, key.getSplit().getSegment().compareTo(inKey.getSplit().getSegment()));
+        Assert.assertEquals(0, key.getSegment().compareTo(inKey.getSegment()));
         Assert.assertEquals(key.getOffset(), inKey.getOffset());
     }
 
     @Test
     public void testEventKeyComparable() throws IOException {
         Segment segment1 = new Segment(TEST_SCOPE, TEST_STREAM, 10);
-        PravegaInputSplit split1 = new PravegaInputSplit(segment1, 1, 100);
-        EventKey key1 = new EventKey(split, 5L);
+        EventKey key1 = new EventKey(segment1, 5L);
 
         for (int seg = 9; seg <= 11; seg++) {
-            for (int end = 99; end <= 101; end++) {
-                for (long off = 4L; off <= 6L; off++) {
-                    Segment segment2 = new Segment(TEST_SCOPE, TEST_STREAM, seg);
-                    PravegaInputSplit split2 = new PravegaInputSplit(segment2, 1, end);
-                    EventKey key2 = new EventKey(split2, off);
-                    if (split1.compareTo(split2) == 0) {
-                        Assert.assertTrue(key1.compareTo(key2) == Long.compare(5L, off));
-                    } else {
-                        Assert.assertTrue(key1.compareTo(key2) == split1.compareTo(split2));
-                    }
+            for (long off = 4L; off <= 6L; off++) {
+                Segment segment2 = new Segment(TEST_SCOPE, TEST_STREAM, seg);
+                EventKey key2 = new EventKey(segment2, off);
+                if (segment1.compareTo(segment2) == 0) {
+                    Assert.assertTrue(key1.compareTo(key2) == Long.compare(5L, off));
+                } else {
+                    Assert.assertTrue(key1.compareTo(key2) == segment1.compareTo(segment2));
                 }
             }
         }
