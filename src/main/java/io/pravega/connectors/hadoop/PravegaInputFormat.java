@@ -18,8 +18,8 @@ import com.google.gson.reflect.TypeToken;
 
 import io.pravega.client.ClientFactory;
 import io.pravega.client.batch.BatchClient;
-import io.pravega.client.batch.StreamSegmentsIterator;
 import io.pravega.client.batch.SegmentRange;
+import io.pravega.client.batch.StreamInfo;
 import io.pravega.client.segment.impl.Segment;
 import io.pravega.client.stream.Stream;
 import io.pravega.client.stream.StreamCut;
@@ -139,8 +139,8 @@ public class PravegaInputFormat<V> extends InputFormat<EventKey, V> {
     @VisibleForTesting
     public static String fetchPositionsJson(ClientFactory clientFactory, String scopeName, String streamName) throws IOException {
         BatchClient batchClient = clientFactory.createBatchClient();
-        StreamSegmentsIterator ssIter = batchClient.getSegments(Stream.of(scopeName, streamName), null, null);
-        StreamCut endStreamCut = ssIter.getEndStreamCut();
+        StreamInfo streamInfo = batchClient.getStreamInfo(Stream.of(scopeName, streamName)).join();
+        StreamCut endStreamCut = streamInfo.getTailStreamCut();
 
         Gson gson = new GsonBuilder()
             .enableComplexMapKeySerialization().create();
