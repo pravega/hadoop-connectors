@@ -57,6 +57,11 @@ repositories {
     }
 }
 
+configurations {
+    shadowOnly {
+    }
+}
+
 dependencies {
     compile(group: 'io.pravega', name: 'pravega-client', version: pravegaVersion) {
         exclude group: 'org.slf4j', module: 'slf4j-api'
@@ -72,6 +77,10 @@ dependencies {
 
     compileOnly group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion
     compileOnly group: 'org.apache.hadoop', name: 'hadoop-mapreduce-client-core', version: hadoopVersion
+
+    shadowOnly group: 'org.slf4j', name: 'slf4j-api', version: slf4jApiVersion
+    shadowOnly group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion
+    shadowOnly group: 'org.apache.hadoop', name: 'hadoop-mapreduce-client-core', version: hadoopVersion
 }
 
 test {
