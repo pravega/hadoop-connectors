@@ -11,6 +11,7 @@
 package io.pravega.connectors.hadoop;
 
 import io.pravega.client.batch.SegmentRange;
+import io.pravega.client.batch.StreamInfo;
 import io.pravega.client.batch.StreamSegmentsIterator;
 import io.pravega.client.batch.impl.SegmentRangeImpl;
 import io.pravega.client.batch.BatchClient;
@@ -29,6 +30,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -120,15 +122,21 @@ public class PravegaInputFormatTest {
         StreamSegmentsIterator mockStreamSegmentsIterator = mockStreamSegmentsIterator();
         Mockito.doReturn(mockStreamSegmentsIterator).when(mockBatchClient)
             .getSegments(anyObject(), anyObject(), anyObject());
+
+        CompletableFuture<StreamInfo> future = mock(CompletableFuture.class);
+        Mockito.doReturn(future).when(mockBatchClient).getStreamInfo(anyObject());
+
+        Stream s = new StreamImpl(TEST_SCOPE, TEST_STREAM);
+        StreamCutImpl sc = new StreamCutImpl(s, genPositions(10));
+        StreamInfo si = new StreamInfo(TEST_SCOPE, TEST_STREAM, sc, null);
+        Mockito.doReturn(si).when(future).join();
+
         return mockBatchClient;
     }
 
     private StreamSegmentsIterator mockStreamSegmentsIterator() {
         StreamSegmentsIterator mockStreamSegmentsIterator = mock(StreamSegmentsIterator.class);
         Mockito.doReturn(mockIterator()).when(mockStreamSegmentsIterator).getIterator();
-        Stream s = new StreamImpl(TEST_SCOPE, TEST_STREAM);
-        StreamCutImpl sc = new StreamCutImpl(s, genPositions(10));
-        Mockito.doReturn(sc).when(mockStreamSegmentsIterator).getEndStreamCut();
         return mockStreamSegmentsIterator;
     }
 
