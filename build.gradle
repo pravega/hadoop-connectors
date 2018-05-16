@@ -13,7 +13,9 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath group: 'com.github.jengelman.gradle.plugins', name:'shadow', version: shadowGradlePlugin
+        classpath "com.github.jengelman.gradle.plugins:shadow:${shadowGradlePlugin}"
+        classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:${bintrayPluginVersion}"
+        classpath "org.ajoberstar:gradle-git:${gradleGitPluginVersion}"
     }
 }
 
@@ -23,8 +25,11 @@ apply plugin: 'checkstyle'
 apply from: 'gradle/java.gradle'
 apply from: 'gradle/maven.gradle'
 
-group = 'io.pravega'
-version = connectorVersion
+apply from: 'gradle/bintray.gradle'
+apply plugin: 'org.ajoberstar.grgit'
+
+group = "io.pravega"
+version = getProjectVersion()
 
 description = """Pravega Hadoop Connector(pravega-inputformat)"""
 
@@ -101,4 +106,15 @@ javadoc {
     title = "Pravega Hadoop Connector"
     failOnError = false
     exclude "**/impl/**";
+}
+
+def getProjectVersion() {
+    String ver = connectorVersion
+    if (ver.contains("-SNAPSHOT")) {
+        String versionLabel = ver.substring(0, ver.indexOf("-SNAPSHOT"))
+        def count = grgit.log(includes:['HEAD']).size()
+        def commitId = "${grgit.head().abbreviatedId}"
+        ver = versionLabel + "-" + count + "." + commitId + "-SNAPSHOT"
+    }
+    return ver
 }
