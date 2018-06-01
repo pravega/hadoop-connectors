@@ -70,8 +70,8 @@ public class PravegaInputFormat<V> extends InputFormat<EventKey, V> {
 
     /**
      * Generates splits which can be used by hadoop mapper to read pravega segments in parallel.
-     * <p>
-     * <p>The number of created input splits is equivalent to the parallelism of the source. For each input split,
+     *
+     * The number of created input splits is equivalent to the parallelism of the source. For each input split,
      * a Pravega batch client will be created to read from the specified Pravega segment. Each input split is closed when
      * the nextKeyValue() returns false.
      *

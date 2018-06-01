@@ -1,11 +1,29 @@
 language: java
+# the secure configurations in env: section is for BINTRAY_USER=<USER> and BINTRAY_KEY=<KEY> properties
+# which will be used for publishing artifacts to snapshot repository
 env:
   global:
   - GRADLE_OPTS="-Xms128m"
+  - secure: "HOWQF8zJrWYftBCsu/lnmG1gUN7jKu3dEMX7kc76jUugOMUbjW2BtQguG7cuI4NCz3XLBeYa9ZQMg1snvkWJcpKH/vpTLh7Mf6eV2h1/ocfCnFw/iQw1Y/Tsgr3jyr/usdGiClpHrzV/OC6p/n0shJmawfK40rSn1P3xiRdYOLHDd/vBkwxCbcS6mOOlLrKG5lXJ2GOGBWGWmXhbBCCy6XWJzF2+CFf02ieL6SvkxNwIlKrif8cYSzV+lAoxuoVPjK9qMbB3r/BD6+8vGjIAX4MgvWRGkok/tfuCBE+PQ1mJIJBKzq3T1Hy/0czWClNbTAAZKdSTErR4REdViZrddddr39olzn7Y7GYCcG/cnpfGnhmeQQ/9ddvH3do6Tb3rh/nxs2PeFuofDwoWLlwke6oed/yhI9tEZzBGdVW6y6HCcfYfvaliaSIB24SDBA8I2K/m2oay8f2gbDyVeBRK6pCEDCklbPGPBjVVfhqosgbFcZfCYO4WVGh3c1j+siT1yHNxsiVSYT6riIzA5D10o/8o+b/ex2AS6lmtQR2L9rpp+zzm7u1scvsXu6dUN/fPZqBZb3/kY8kh7xkoNCc3bYXOy3I76xu756FpR6VJkU1UkRDjT9cepza1A3YDvyAgEClseTFBKE+RSiBh9v7PVcW4oItJ+fRRvnakhroYByM="
+  - secure: "VH9F5YUSBh16A3gmTq/vE5Qt/yl+p8+TwrOIeELF7YvYS6915+Ju0BiLwq6EvJ2eZf3OZi5bdmXgdiuUHeyYtHCv4LK/RhClOeF0NtqlltXPUPKcoA+urgsT+UKQ7uSFgMaHhG+jDDpueJjKqNwmuxBpe4AcumCilmF/tM0EZucGD40JjoAJBQydLygmmoucp5KMNAr+xrp3JNC10T3HvtwTwnxwk00deEiHY5BctyIaS63hqFml1pIF69bL7+lsVfaw8IvtFBypGvcJPiUSbQVlj9zSU7ur+q7be/KUtvL99X+ZgyoGgrGmrE/qKubb6S9G8YtMWSy57CE1RHcZNjXMOIQ0PJlRMLpzH1KZQLHn3Pnu/vN/tAkSCgLExVo3DOteaanT0ve+Nxp8feNORb0OtKvlcpLgB7ke+VziZRx0Rlhvao2DmjIcoe9Re8uUszLyQf+c6rpiiCe9L1N6V+6WBSB4nYEe/s6kQ/dsu3St2ttePKXdsV2QhhrsupBv2qk8LL0AFJT9ECqAqRHQkVCB2EJLd/zRNdSSwJ2xWhJ42t6PKSfLrPXlLQKN1GCLSp+6io/6p0RD2dvVrwY5gtD309krKOdD9nqGvbZlIm1oq/zKuH0BoKN5JQ4qCI8ju9J0RjMD53vtQnMbD7mKVE0iaS1Q8Rk+2fMDZGMEkLo="
+
 cache:
   directories:
   - ".gradle"
   - "$HOME/.gradle"
+
+stages:
+  - name: build
+  - name: snapshot
+    if: branch = master AND NOT (type = pull_request)
+
+jobs:
+  include:
+    - stage: build
+      script: ./gradlew build
+    - stage: snapshot
+      script: ./gradlew publishToRepo -PpublishUrl=jcenterSnapshot -PpublishUsername=$BINTRAY_USER -PpublishPassword=$BINTRAY_KEY
+
 notifications:
   slack:
     matrix:
