@@ -51,7 +51,7 @@ public class PravegaInputSplit extends InputSplit implements WritableComparable<
     public void readFields(DataInput in) throws IOException {
         String scopeName = Text.readString(in);
         String streamName = Text.readString(in);
-        int segmentNumber = in.readInt();
+        long segmentNumber = in.readLong();
         long startOffset = in.readLong();
         long endOffset = in.readLong();
         this.segmentRange = SegmentRangeImpl.builder()
@@ -67,7 +67,7 @@ public class PravegaInputSplit extends InputSplit implements WritableComparable<
     public void write(DataOutput out) throws IOException {
         Text.writeString(out, this.segmentRange.getScope());
         Text.writeString(out, this.segmentRange.getStreamName());
-        out.writeInt(this.segmentRange.getSegmentNumber());
+        out.writeLong(this.segmentRange.getSegmentId());
         out.writeLong(this.segmentRange.getStartOffset());
         out.writeLong(this.segmentRange.getEndOffset());
     }
@@ -88,7 +88,7 @@ public class PravegaInputSplit extends InputSplit implements WritableComparable<
     }
 
     protected Segment getSegment() {
-        return new Segment(segmentRange.getScope(), segmentRange.getStreamName(), segmentRange.getSegmentNumber());
+        return new Segment(segmentRange.getScope(), segmentRange.getStreamName(), segmentRange.getSegmentId());
     }
 
     protected SegmentRange getSegmentRange() {
