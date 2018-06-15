@@ -17,6 +17,7 @@ import org.apache.hadoop.io.WritableComparable;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.io.Serializable;
 
 import javax.annotation.concurrent.NotThreadSafe;
 
@@ -24,8 +25,9 @@ import javax.annotation.concurrent.NotThreadSafe;
  * A writable key class for records (events) produced by {@link PravegaInputRecordReader}.
  */
 @NotThreadSafe
-public class EventKey implements WritableComparable<EventKey> {
+public class EventKey implements WritableComparable<EventKey>, Serializable {
 
+    private static final long serialVersionUID = 1L;
     private Segment segment;
     private long offset;
 

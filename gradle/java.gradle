@@ -14,7 +14,7 @@ compileJava {
     ])
 }
 
-archivesBaseName = "hadoop-connectors"
+archivesBaseName = "pravega-connectors-hadoop"
 
 assemble.dependsOn(shadowJar)
 
