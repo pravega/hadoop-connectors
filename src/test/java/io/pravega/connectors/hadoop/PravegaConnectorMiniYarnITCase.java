@@ -93,7 +93,7 @@ public class PravegaConnectorMiniYarnITCase {
         SETUP_UTILS.stopAllServices();
     }
 
-    @Ignore @Test // TODO: ignore it now since it only works with submodule build. Some dependencies need to be investigated.
+    @Ignore @Test // TODO (issue #38): ignore it now since it only works with submodule build.
     public void testPravegaConnector() throws Exception {
         boolean status = job.waitForCompletion(true);
         Assert.assertTrue(job.isSuccessful());
