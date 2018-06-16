@@ -11,7 +11,7 @@
 rootProject.name = 'hadoop-connectors'
 
 includeBuild('pravega') {
-    if (pravegaVersion.endsWith("-SNAPSHOT")) {
+    if (usePravegaVersionSubModule.toBoolean()) {
         dependencySubstitution {
             substitute module('io.pravega:pravega-client') with project(':client')
             substitute module('io.pravega:pravega-common') with project(':common')

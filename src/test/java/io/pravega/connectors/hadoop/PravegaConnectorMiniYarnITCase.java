@@ -29,6 +29,7 @@ import org.apache.hadoop.yarn.server.MiniYARNCluster;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -92,7 +93,7 @@ public class PravegaConnectorMiniYarnITCase {
         SETUP_UTILS.stopAllServices();
     }
 
-    @Test
+    @Ignore @Test // TODO (issue #38): ignore it now since it only works with submodule build.
     public void testPravegaConnector() throws Exception {
         boolean status = job.waitForCompletion(true);
         Assert.assertTrue(job.isSuccessful());

@@ -29,7 +29,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,6 +37,9 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+
+import static io.pravega.shared.segment.StreamSegmentNameUtils.computeSegmentId;
+import static io.pravega.shared.segment.StreamSegmentNameUtils.getSegmentNumber;
 
 
 public class PravegaInputFormatITCase {
@@ -90,19 +93,18 @@ public class PravegaInputFormatITCase {
         Map<Double, Double> map = new HashMap<>();
         map.put(0.0, 0.5);
         map.put(0.5, 1.0);
-        Boolean done = controller.scaleStream(stream, Collections.singletonList(0), map, executor).getFuture().get();
+        Boolean done = controller.scaleStream(stream, Collections.singletonList(0L), map, executor).getFuture().get();
         Assert.assertTrue(done);
         writeEvents(20, 20);
         splits = inputFormat.getSplits(job);
         Assert.assertEquals(3, splits.size());
         Assert.assertEquals(USED_SPACE_PER_INTEGER * 20 * 2, getTotalUsedSpace(splits));
 
-        map = new HashMap<>();
-        map.put(0.0, 1.0);
-        ArrayList<Integer> seal = new ArrayList<>();
-        seal.add(1);
-        seal.add(2);
-        done = controller.scaleStream(stream, Collections.unmodifiableList(seal), map, executor).getFuture().get();
+        done = controller.scaleStream(
+                stream,
+                Arrays.asList(computeSegmentId(1, 1), computeSegmentId(2, 1)),
+                Collections.singletonMap(0.0, 1.0),
+                executor).getFuture().get();
         Assert.assertTrue(done);
         writeEvents(20, 40);
         splits = inputFormat.getSplits(job);
@@ -114,7 +116,7 @@ public class PravegaInputFormatITCase {
         int totalLength = 0;
         for (int i = 0; i < splits.size(); i++) {
             PravegaInputSplit p = (PravegaInputSplit) (splits.get(i));
-            Assert.assertEquals(i, p.getSegment().getSegmentNumber());
+            Assert.assertEquals(i, getSegmentNumber(p.getSegment().getSegmentId()));
             totalLength += p.getLength();
         }
         return totalLength;
