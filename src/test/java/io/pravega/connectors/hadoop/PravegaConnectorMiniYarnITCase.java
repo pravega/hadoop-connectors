@@ -29,7 +29,6 @@ import org.apache.hadoop.yarn.server.MiniYARNCluster;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -60,6 +59,7 @@ public class PravegaConnectorMiniYarnITCase {
         writer.writeEvent("pravega test");
         writer.writeEvent("pravega job test");
         writer.writeEvent("pravega local job test");
+        writer.flush();
 
         // setup mini dfs cluster
         YarnConfiguration conf = new YarnConfiguration();
@@ -93,7 +93,7 @@ public class PravegaConnectorMiniYarnITCase {
         SETUP_UTILS.stopAllServices();
     }
 
-    @Ignore @Test // TODO (issue #38): ignore it now since it only works with submodule build.
+    @Test
     public void testPravegaConnector() throws Exception {
         boolean status = job.waitForCompletion(true);
         Assert.assertTrue(job.isSuccessful());

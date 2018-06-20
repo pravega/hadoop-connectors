@@ -67,6 +67,7 @@ public class PravegaConnectorLocalJobITCase {
         // TEST 0: without start or end
         writer.writeEvent("begin");
         writer.writeEvent("pravega local job test");
+        writer.flush();
 
         // setup local job runner
         outputPath = new Path("src/test/java/io/pravega/connectors/hadoop/localjobrunnertestdir/");
@@ -94,6 +95,7 @@ public class PravegaConnectorLocalJobITCase {
 
         // TEST 1: with end position only
         writer.writeEvent("streamcut1 endonly");
+        writer.flush();
 
         fs = FileSystem.getLocal(conf);
         if (fs.exists(outputPath)) {
@@ -105,6 +107,7 @@ public class PravegaConnectorLocalJobITCase {
 
         // won't be read because it's written after end poisitions are fetched
         writer.writeEvent("onemore");
+        writer.flush();
 
         job = configureJob(conf, outputPath, "", endPos1);
         status = job.waitForCompletion(true);
@@ -124,6 +127,7 @@ public class PravegaConnectorLocalJobITCase {
 
         // TEST 2: with both start and end positions
         writer.writeEvent("streamcut2 startandend");
+        writer.flush();
 
         fs = FileSystem.getLocal(conf);
         if (fs.exists(outputPath)) {
@@ -135,6 +139,7 @@ public class PravegaConnectorLocalJobITCase {
 
         // won't be read because it's written after end poisitions are fetched
         writer.writeEvent("twomore");
+        writer.flush();
 
         job = configureJob(conf, outputPath, endPos1, endPos2);
         status = job.waitForCompletion(true);
@@ -149,6 +154,7 @@ public class PravegaConnectorLocalJobITCase {
 
         // TEST 3: with start positions only
         writer.writeEvent("streamcut3 startonly");
+        writer.flush();
 
         fs = FileSystem.getLocal(conf);
         if (fs.exists(outputPath)) {
