@@ -173,17 +173,20 @@ public class PravegaConnectorLocalJobITCase {
         Assert.assertEquals(new Integer(1), counts.get("startonly"));
     }
 
-    private Job configureJob(Configuration conf, Path outputPath, String startPos, String endPos) throws Exception {
-        conf.setStrings(PravegaInputFormat.START_POSITIONS, startPos);
-        conf.setStrings(PravegaInputFormat.END_POSITIONS, endPos);
-        return configureJob(conf, outputPath);
+    private Job configureJob(Configuration conf, Path outputPath) throws Exception {
+        return configureJob(conf, outputPath, "", "");
     }
 
-    private Job configureJob(Configuration conf, Path outputPath) throws Exception {
-        conf.setStrings(PravegaInputFormat.SCOPE_NAME, TEST_SCOPE);
-        conf.setStrings(PravegaInputFormat.STREAM_NAME, TEST_STREAM);
-        conf.setStrings(PravegaInputFormat.URI_STRING, SETUP_UTILS.getControllerUri());
-        conf.setStrings(PravegaInputFormat.DESERIALIZER, JavaSerializer.class.getName());
+    private Job configureJob(Configuration conf, Path outputPath, String startPos, String endPos) throws Exception {
+        conf = PravegaInputFormat.builder(conf)
+            .withScope(TEST_SCOPE)
+            .forStream(TEST_STREAM)
+            .withURI(SETUP_UTILS.getControllerUri())
+            .withDeserializer(JavaSerializer.class.getName())
+            .startPositions(startPos)
+            .endPositions(endPos)
+            .build();
+
         Job job = Job.getInstance(conf, "WordCount");
 
         job.setJarByClass(PravegaConnectorLocalJobITCase.class);

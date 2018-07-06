@@ -100,11 +100,12 @@ public class PravegaInputFormatTest {
     }
 
     private JobContext getJobContext() throws Exception {
-        Configuration conf = new Configuration();
-        conf.setStrings(PravegaInputFormat.SCOPE_NAME, TEST_SCOPE);
-        conf.setStrings(PravegaInputFormat.STREAM_NAME, TEST_STREAM);
-        conf.setStrings(PravegaInputFormat.URI_STRING, TEST_URI);
-        conf.setStrings(PravegaInputFormat.DESERIALIZER, IntegerSerializer.class.getName());
+        Configuration conf = PravegaInputFormat.builder()
+            .withScope(TEST_SCOPE)
+            .forStream(TEST_STREAM)
+            .withURI(TEST_URI)
+            .withDeserializer(IntegerSerializer.class.getName())
+            .build();
         Job mockJob = mock(Job.class);
         Mockito.doReturn(conf).when(mockJob).getConfiguration();
         return mockJob;
@@ -158,4 +159,45 @@ public class PravegaInputFormatTest {
         return positions;
     }
 
+    @Test
+    public void testConfigBuilder() {
+        String[] params = new String[]{"scope", "stream", "tcp://localhost:9090", "class1", "1234", "5678"};
+        int idx = 0;
+        // generate config from nothing
+        Configuration conf1 = PravegaInputFormat.builder()
+            .withScope(params[idx++])
+            .forStream(params[idx++])
+            .withURI(params[idx++])
+            .withDeserializer(params[idx++])
+            .startPositions(params[idx++])
+            .endPositions(params[idx++])
+            .build();
+        checkJobConf(conf1, params);
+
+        // add properties to existing config
+        Configuration conf2 = new Configuration();
+        conf2.setStrings("OTHERS", "something");
+        idx = 0;
+        conf2 = PravegaInputFormat.builder(conf2)
+            .withScope(params[idx++])
+            .forStream(params[idx++])
+            .withURI(params[idx++])
+            .withDeserializer(params[idx++])
+            .startPositions(params[idx++])
+            .endPositions(params[idx++])
+            .build();
+        checkJobConf(conf2, params);
+        Assert.assertEquals("something", conf2.get("OTHERS"));
+    }
+
+    private void checkJobConf(Configuration conf, String[] params) {
+        Assert.assertEquals(params.length, 6);
+        int idx = 0;
+        Assert.assertEquals(conf.get(PravegaConfig.INPUT_SCOPE_NAME), params[idx++]);
+        Assert.assertEquals(conf.get(PravegaConfig.INPUT_STREAM_NAME), params[idx++]);
+        Assert.assertEquals(conf.get(PravegaConfig.INPUT_URI_STRING), params[idx++]);
+        Assert.assertEquals(conf.get(PravegaConfig.INPUT_DESERIALIZER), params[idx++]);
+        Assert.assertEquals(conf.get(PravegaConfig.INPUT_START_POSITIONS), params[idx++]);
+        Assert.assertEquals(conf.get(PravegaConfig.INPUT_END_POSITIONS), params[idx++]);
+    }
 }

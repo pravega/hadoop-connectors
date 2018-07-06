@@ -40,23 +40,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+
 /**
  * An InputFormat that can be added as a source to read from Pravega in a hadoop batch job.
  */
 public class PravegaInputFormat<V> extends InputFormat<EventKey, V> {
 
-    // Pravega scope name
-    public static final String SCOPE_NAME = "pravega.scope";
-    // Pravega stream name
-    public static final String STREAM_NAME = "pravega.stream";
-    // Pravega uri string
-    public static final String URI_STRING = "pravega.uri";
-    // Pravega deserializer class name
-    public static final String DESERIALIZER = "pravega.deserializer";
-    // Pravega optional start streamcut
-    public static final String START_POSITIONS = "pravega.startpositions";
-    // Pravega optional end streamcut
-    public static final String END_POSITIONS = "pravega.endpositions";
     // client factory
     private ClientFactory externalClientFactory;
 
@@ -83,23 +72,23 @@ public class PravegaInputFormat<V> extends InputFormat<EventKey, V> {
         // check parameters
         Configuration conf = context.getConfiguration();
 
-        final String scopeName = Optional.ofNullable(conf.get(PravegaInputFormat.SCOPE_NAME)).orElseThrow(() ->
-                new IOException("The input scope name must be configured (" + PravegaInputFormat.SCOPE_NAME + ")"));
-        final String streamName = Optional.ofNullable(conf.get(PravegaInputFormat.STREAM_NAME)).orElseThrow(() ->
-                new IOException("The input stream name must be configured (" + PravegaInputFormat.STREAM_NAME + ")"));
-        final URI controllerURI = Optional.ofNullable(conf.get(PravegaInputFormat.URI_STRING)).map(URI::create).orElseThrow(() ->
-                new IOException("The Pravega controller URI must be configured (" + PravegaInputFormat.URI_STRING + ")"));
-        final String deserializerClassName = Optional.ofNullable(conf.get(PravegaInputFormat.DESERIALIZER)).orElseThrow(() ->
-                new IOException("The event deserializer must be configured (" + PravegaInputFormat.DESERIALIZER + ")"));
+        final String scopeName = Optional.ofNullable(conf.get(PravegaConfig.INPUT_SCOPE_NAME)).orElseThrow(() ->
+                new IOException("The input scope name must be configured (" + PravegaConfig.INPUT_SCOPE_NAME + ")"));
+        final String streamName = Optional.ofNullable(conf.get(PravegaConfig.INPUT_STREAM_NAME)).orElseThrow(() ->
+                new IOException("The input stream name must be configured (" + PravegaConfig.INPUT_STREAM_NAME + ")"));
+        final URI controllerURI = Optional.ofNullable(conf.get(PravegaConfig.INPUT_URI_STRING)).map(URI::create).orElseThrow(() ->
+                new IOException("The Pravega controller URI must be configured (" + PravegaConfig.INPUT_URI_STRING + ")"));
+        final String deserializerClassName = Optional.ofNullable(conf.get(PravegaConfig.INPUT_DESERIALIZER)).orElseThrow(() ->
+                new IOException("The event deserializer must be configured (" + PravegaConfig.INPUT_DESERIALIZER + ")"));
 
         final StreamCut startStreamCut = getStreamCutFromPositionsJson(
                 scopeName,
                 streamName,
-                Optional.ofNullable(conf.get(PravegaInputFormat.START_POSITIONS)).orElse(""));
+                Optional.ofNullable(conf.get(PravegaConfig.INPUT_START_POSITIONS)).orElse(""));
         final StreamCut endStreamCut = getStreamCutFromPositionsJson(
                 scopeName,
                 streamName,
-                Optional.ofNullable(conf.get(PravegaInputFormat.END_POSITIONS)).orElse(""));
+                Optional.ofNullable(conf.get(PravegaConfig.INPUT_END_POSITIONS)).orElse(""));
 
         ClientFactory clientFactory = (externalClientFactory != null) ? externalClientFactory : ClientFactory.withScope(scopeName, controllerURI);
 
@@ -161,5 +150,23 @@ public class PravegaInputFormat<V> extends InputFormat<EventKey, V> {
 
         sc = new StreamCutImpl(Stream.of(scopeName, streamName), positions);
         return sc;
+    }
+
+    /**
+     * Gets a builder {@link PravegaInputFormat} to read Pravega streams using the batch API.
+     * @return {@link PravegaInputFormatBuilder}
+     */
+    public static PravegaInputFormatBuilder builder() {
+        return new PravegaInputFormatBuilder();
+    }
+
+    /**
+     * Gets a builder {@link PravegaInputFormat} to read Pravega streams using the batch API.
+     *
+     * @param conf Configuration
+     * @return {@link PravegaInputFormatBuilder}
+     */
+    public static PravegaInputFormatBuilder builder(Configuration conf) {
+        return new PravegaInputFormatBuilder(conf);
     }
 }

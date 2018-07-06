@@ -68,10 +68,10 @@ public class PravegaInputRecordReader<V> extends RecordReader<EventKey, V> {
     public void initialize(InputSplit split, Configuration conf) throws IOException, InterruptedException {
         this.split = (PravegaInputSplit) split;
 
-        clientFactory = (externalClientFactory != null) ? externalClientFactory : ClientFactory.withScope(conf.get(PravegaInputFormat.SCOPE_NAME), URI.create(conf.get(PravegaInputFormat.URI_STRING)));
+        clientFactory = (externalClientFactory != null) ? externalClientFactory : ClientFactory.withScope(conf.get(PravegaConfig.INPUT_SCOPE_NAME), URI.create(conf.get(PravegaConfig.INPUT_URI_STRING)));
 
         batchClient = clientFactory.createBatchClient();
-        String deserializerClassName = conf.get(PravegaInputFormat.DESERIALIZER);
+        String deserializerClassName = conf.get(PravegaConfig.INPUT_DESERIALIZER);
         try {
             Class<?> deserializerClass = Class.forName(deserializerClassName);
             deserializer = (Serializer<V>) deserializerClass.newInstance();

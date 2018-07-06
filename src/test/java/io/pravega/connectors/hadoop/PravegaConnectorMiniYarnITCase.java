@@ -106,10 +106,13 @@ public class PravegaConnectorMiniYarnITCase {
     }
 
     private Job configureJob(Configuration conf, Path outputPath) throws Exception {
-        conf.setStrings(PravegaInputFormat.SCOPE_NAME, TEST_SCOPE);
-        conf.setStrings(PravegaInputFormat.STREAM_NAME, TEST_STREAM);
-        conf.setStrings(PravegaInputFormat.URI_STRING, SETUP_UTILS.getControllerUri());
-        conf.setStrings(PravegaInputFormat.DESERIALIZER, JavaSerializer.class.getName());
+        conf = PravegaInputFormat.builder(conf)
+            .withScope(TEST_SCOPE)
+            .forStream(TEST_STREAM)
+            .withURI(SETUP_UTILS.getControllerUri())
+            .withDeserializer(JavaSerializer.class.getName())
+            .build();
+
         Job job = Job.getInstance(conf, "WordCount");
 
         job.setJarByClass(getClass());

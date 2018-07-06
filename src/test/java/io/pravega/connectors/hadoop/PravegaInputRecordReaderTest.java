@@ -80,11 +80,12 @@ public class PravegaInputRecordReaderTest {
     }
 
     private TaskAttemptContext mockTaskAttemptContextImpl() throws Exception {
-        Configuration conf = new Configuration();
-        conf.setStrings(PravegaInputFormat.SCOPE_NAME, TEST_SCOPE);
-        conf.setStrings(PravegaInputFormat.STREAM_NAME, TEST_STREAM);
-        conf.setStrings(PravegaInputFormat.URI_STRING, TEST_URI);
-        conf.setStrings(PravegaInputFormat.DESERIALIZER, IntegerSerializer.class.getName());
+        Configuration conf = PravegaInputFormat.builder()
+            .withScope(TEST_SCOPE)
+            .forStream(TEST_STREAM)
+            .withURI(TEST_URI)
+            .withDeserializer(IntegerSerializer.class.getName())
+            .build();
 
         TaskAttemptContextImpl mockTaskAttemptContextImpl = mock(TaskAttemptContextImpl.class);
         Mockito.doReturn(conf).when(mockTaskAttemptContextImpl).getConfiguration();

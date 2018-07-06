@@ -77,10 +77,13 @@ public class PravegaInputFormatITCase {
     @Test
     public void testGetSplits() throws IOException, ExecutionException, InterruptedException {
         Configuration conf = new Configuration();
-        conf.setStrings(PravegaInputFormat.SCOPE_NAME, TEST_SCOPE);
-        conf.setStrings(PravegaInputFormat.STREAM_NAME, TEST_STREAM);
-        conf.setStrings(PravegaInputFormat.URI_STRING, SETUP_UTILS.getControllerUri());
-        conf.setStrings(PravegaInputFormat.DESERIALIZER, IntegerSerializer.class.getName());
+        conf = PravegaInputFormat.builder(conf)
+            .withScope(TEST_SCOPE)
+            .forStream(TEST_STREAM)
+            .withURI(SETUP_UTILS.getControllerUri())
+            .withDeserializer(IntegerSerializer.class.getName())
+            .build();
+
         Job job = new Job(conf);
 
         writeEvents(20, 0);
@@ -110,6 +113,23 @@ public class PravegaInputFormatITCase {
         splits = inputFormat.getSplits(job);
         Assert.assertEquals(4, splits.size());
         Assert.assertEquals(USED_SPACE_PER_INTEGER * 20 * 3, getTotalUsedSpace(splits));
+    }
+
+    @Test
+    public void testGetSplitsWithConfigBuilder() throws IOException, ExecutionException, InterruptedException {
+        Configuration conf = PravegaInputFormat.builder()
+            .withScope(TEST_SCOPE)
+            .forStream(TEST_STREAM)
+            .withURI(SETUP_UTILS.getControllerUri())
+            .withDeserializer(IntegerSerializer.class.getName())
+            .build();
+        Job job = new Job(conf);
+
+        writeEvents(20, 0);
+        InputFormat<EventKey, Integer> inputFormat = new PravegaInputFormat<>();
+        List<InputSplit> splits = inputFormat.getSplits(job);
+        Assert.assertEquals(1, splits.size());
+        Assert.assertEquals(USED_SPACE_PER_INTEGER * 20, getTotalUsedSpace(splits));
     }
 
     private int getTotalUsedSpace(List<InputSplit> splits) throws IOException, InterruptedException {
