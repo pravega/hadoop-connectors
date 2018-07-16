@@ -40,7 +40,6 @@ abstract class PravegaBuilder<B extends PravegaBuilder> {
      */
     public Configuration build() {
         check();
-
         if (this.conf == null) {
             this.conf = new Configuration();
         }
@@ -61,17 +60,57 @@ abstract class PravegaBuilder<B extends PravegaBuilder> {
         this.settings.put(param, value);
     }
 
+    /**
+     * Adds scope name to bulider
+     *
+     * @param scopeName String
+     * @return builder instance
+     */
     public abstract B withScope(String scopeName);
 
+    /**
+     * Adds stream name to bulider
+     *
+     * @param streamName String
+     * @return builder instance
+     */
     public abstract B forStream(String streamName);
 
+    /**
+     * Adds URI to bulider
+     *
+     * @param uri String
+     * @return builder instance
+     */
     public abstract B withURI(String uri);
 
+    /**
+     * Adds Deserializer class name to bulider
+     *
+     * @param className String
+     * @return builder instance
+     */
     public abstract B withDeserializer(String className);
 
+    /**
+     * Adds optional start positions to bulider
+     *
+     * @param startPos String
+     * @return builder instance
+     */
     public abstract B startPositions(String startPos);
 
+    /**
+     * Adds optional end positions to bulider
+     *
+     * @param endPos String
+     * @return builder instance
+     */
     public abstract B endPositions(String endPos);
     
+    /**
+     * Do verification
+     *
+     */
     public abstract void check();
 }

@@ -40,7 +40,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-
 /**
  * An InputFormat that can be added as a source to read from Pravega in a hadoop batch job.
  */
