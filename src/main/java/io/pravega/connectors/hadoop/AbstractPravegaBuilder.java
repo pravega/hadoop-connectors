@@ -61,7 +61,7 @@ abstract class PravegaBuilder<B extends PravegaBuilder> {
     }
 
     /**
-     * Adds scope name to bulider
+     * Adds scope name to builder
      *
      * @param scopeName String
      * @return builder instance
@@ -69,7 +69,7 @@ abstract class PravegaBuilder<B extends PravegaBuilder> {
     public abstract B withScope(String scopeName);
 
     /**
-     * Adds stream name to bulider
+     * Adds stream name to builder
      *
      * @param streamName String
      * @return builder instance
@@ -77,7 +77,7 @@ abstract class PravegaBuilder<B extends PravegaBuilder> {
     public abstract B forStream(String streamName);
 
     /**
-     * Adds URI to bulider
+     * Adds URI to builder
      *
      * @param uri String
      * @return builder instance
@@ -85,7 +85,7 @@ abstract class PravegaBuilder<B extends PravegaBuilder> {
     public abstract B withURI(String uri);
 
     /**
-     * Adds Deserializer class name to bulider
+     * Adds Deserializer class name to builder
      *
      * @param className String
      * @return builder instance
@@ -93,7 +93,7 @@ abstract class PravegaBuilder<B extends PravegaBuilder> {
     public abstract B withDeserializer(String className);
 
     /**
-     * Adds optional start positions to bulider
+     * Adds optional start positions to builder
      *
      * @param startPos String
      * @return builder instance
@@ -101,7 +101,7 @@ abstract class PravegaBuilder<B extends PravegaBuilder> {
     public abstract B startPositions(String startPos);
 
     /**
-     * Adds optional end positions to bulider
+     * Adds optional end positions to builder
      *
      * @param endPos String
      * @return builder instance
