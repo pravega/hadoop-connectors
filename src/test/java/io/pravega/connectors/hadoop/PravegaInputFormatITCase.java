@@ -115,23 +115,6 @@ public class PravegaInputFormatITCase {
         Assert.assertEquals(USED_SPACE_PER_INTEGER * 20 * 3, getTotalUsedSpace(splits));
     }
 
-    @Test
-    public void testGetSplitsWithConfigBuilder() throws IOException, ExecutionException, InterruptedException {
-        Configuration conf = PravegaInputFormat.builder()
-            .withScope(TEST_SCOPE)
-            .forStream(TEST_STREAM)
-            .withURI(SETUP_UTILS.getControllerUri())
-            .withDeserializer(IntegerSerializer.class.getName())
-            .build();
-        Job job = new Job(conf);
-
-        writeEvents(20, 0);
-        InputFormat<EventKey, Integer> inputFormat = new PravegaInputFormat<>();
-        List<InputSplit> splits = inputFormat.getSplits(job);
-        Assert.assertEquals(1, splits.size());
-        Assert.assertEquals(USED_SPACE_PER_INTEGER * 20, getTotalUsedSpace(splits));
-    }
-
     private int getTotalUsedSpace(List<InputSplit> splits) throws IOException, InterruptedException {
         int totalLength = 0;
         for (int i = 0; i < splits.size(); i++) {

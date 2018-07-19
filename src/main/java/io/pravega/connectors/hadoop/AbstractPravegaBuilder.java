@@ -85,36 +85,6 @@ abstract class PravegaBuilder<B extends PravegaBuilder> {
     public abstract B withURI(String uri);
 
     /**
-     * Adds Deserializer class name to builder
-     *
-     * @param className String
-     * @return builder instance
-     */
-    public abstract B withDeserializer(String className);
-
-    /**
-     * Adds optional start positions to builder
-     *
-     * generally, start positions are set to the end positions in previous job,
-     * so only new generated events will be processed, otherwise, start from very beginning
-     *
-     * @param startPos String
-     * @return builder instance
-     */
-    public abstract B startPositions(String startPos);
-
-    /**
-     * Adds optional end positions to builder, so the current job will only process events until these end positions inclusively
-     *
-     * The current latest positions can be retrieved by below code, and it shall be saved for future reference in most of cases
-     * String positions = PravegaInputFormat.fetchLatestPositionsJson("tcp://192.168.0.200:9090", "myScope", "myStream")
-     *
-     * @param endPos String
-     * @return builder instance
-     */
-    public abstract B endPositions(String endPos);
-    
-    /**
      * Do verification
      *
      */

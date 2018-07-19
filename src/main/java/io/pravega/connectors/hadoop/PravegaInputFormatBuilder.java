@@ -56,19 +56,39 @@ public class PravegaInputFormatBuilder extends PravegaBuilder<PravegaInputFormat
         return builder();
     }
 
-    @Override
+    /** Adds Deserializer class name to builder.
+     *
+     * @param className String
+     * @return builder instance
+     */
     public PravegaInputFormatBuilder withDeserializer(String className) {
         this.setString(PravegaConfig.INPUT_DESERIALIZER, className);
         return builder();
     }
 
-    @Override
+    /**
+     * Adds optional start positions to builder
+     *
+     * generally, start positions are set to the end positions in previous job,
+     * so only new generated events will be processed, otherwise, start from very beginning.
+     *
+     * @param startPos String
+     * @return builder instance
+     */
     public PravegaInputFormatBuilder startPositions(String startPos) {
         this.setString(PravegaConfig.INPUT_START_POSITIONS, startPos);
         return builder();
     }
 
-    @Override
+    /**
+     * Adds optional end positions to builder, so the current job will only process events until these end positions inclusively
+     *
+     * The current latest positions can be retrieved by below code, and it shall be saved for future reference in most of cases
+     * String positions = PravegaInputFormat.fetchLatestPositionsJson("tcp://192.168.0.200:9090", "myScope", "myStream").
+     *
+     * @param endPos String
+     * @return builder instance
+     */
     public PravegaInputFormatBuilder endPositions(String endPos) {
         this.setString(PravegaConfig.INPUT_END_POSITIONS, endPos);
         return builder();
