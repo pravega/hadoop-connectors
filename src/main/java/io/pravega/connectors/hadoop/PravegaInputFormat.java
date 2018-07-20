@@ -12,18 +12,13 @@ package io.pravega.connectors.hadoop;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
 
 import io.pravega.client.ClientFactory;
 import io.pravega.client.batch.BatchClient;
 import io.pravega.client.batch.SegmentRange;
 import io.pravega.client.batch.StreamInfo;
-import io.pravega.client.segment.impl.Segment;
 import io.pravega.client.stream.Stream;
 import io.pravega.client.stream.StreamCut;
-import io.pravega.client.stream.impl.StreamCutImpl;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -32,12 +27,12 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.net.URI;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -80,14 +75,10 @@ public class PravegaInputFormat<V> extends InputFormat<EventKey, V> {
         final String deserializerClassName = Optional.ofNullable(conf.get(PravegaConfig.INPUT_DESERIALIZER)).orElseThrow(() ->
                 new IOException("The event deserializer must be configured (" + PravegaConfig.INPUT_DESERIALIZER + ")"));
 
-        final StreamCut startStreamCut = getStreamCutFromPositionsJson(
-                scopeName,
-                streamName,
-                Optional.ofNullable(conf.get(PravegaConfig.INPUT_START_POSITIONS)).orElse(""));
-        final StreamCut endStreamCut = getStreamCutFromPositionsJson(
-                scopeName,
-                streamName,
-                Optional.ofNullable(conf.get(PravegaConfig.INPUT_END_POSITIONS)).orElse(""));
+        final StreamCut startStreamCut = getStreamCutFromString(
+                Optional.ofNullable(conf.get(PravegaConfig.INPUT_START_POSITION)).orElse(""));
+        final StreamCut endStreamCut = getStreamCutFromString(
+                Optional.ofNullable(conf.get(PravegaConfig.INPUT_END_POSITION)).orElse(""));
 
         ClientFactory clientFactory = (externalClientFactory != null) ? externalClientFactory : ClientFactory.withScope(scopeName, controllerURI);
 
@@ -112,42 +103,35 @@ public class PravegaInputFormat<V> extends InputFormat<EventKey, V> {
         return new PravegaInputRecordReader<V>();
     }
 
-    public static String fetchLatestPositionsJson(String uri, String scopeName, String streamName) throws IOException {
+    public static String fetchLatestPosition(String uri, String scopeName, String streamName) throws IOException {
         Preconditions.checkArgument(uri != null && !uri.isEmpty());
         Preconditions.checkArgument(scopeName != null && !scopeName.isEmpty());
         Preconditions.checkArgument(streamName != null && !streamName.isEmpty());
 
         String pos = "";
         try (ClientFactory clientFactory = ClientFactory.withScope(scopeName, URI.create(uri))) {
-            pos = fetchPositionsJson(clientFactory, scopeName, streamName);
+            pos = fetchPosition(clientFactory, scopeName, streamName);
         }
         return pos;
     }
 
     @VisibleForTesting
-    public static String fetchPositionsJson(ClientFactory clientFactory, String scopeName, String streamName) throws IOException {
+    public static String fetchPosition(ClientFactory clientFactory, String scopeName, String streamName) throws IOException {
         BatchClient batchClient = clientFactory.createBatchClient();
         StreamInfo streamInfo = batchClient.getStreamInfo(Stream.of(scopeName, streamName)).join();
         StreamCut endStreamCut = streamInfo.getTailStreamCut();
-
-        Gson gson = new GsonBuilder()
-            .enableComplexMapKeySerialization().create();
-        return gson.toJson(endStreamCut.asImpl().getPositions());
+        return Base64.getEncoder().encodeToString(endStreamCut.toBytes().array());
     }
 
-    private StreamCut getStreamCutFromPositionsJson(String scopeName, String streamName, String s) throws IOException {
+    private StreamCut getStreamCutFromString(String value) throws IOException {
         StreamCut sc = null;
-        if (s == null || s.isEmpty()) {
+        if (value == null || value.isEmpty()) {
             return sc;
         }
 
-        Gson gson = new GsonBuilder()
-            .enableComplexMapKeySerialization().create();
+        ByteBuffer buf = ByteBuffer.wrap(Base64.getDecoder().decode(value));
+        sc = StreamCut.fromBytes(buf);
 
-        Type type = new TypeToken<Map<Segment, Long>>() { }.getType();
-        Map<Segment, Long> positions = gson.fromJson(s, type);
-
-        sc = new StreamCutImpl(Stream.of(scopeName, streamName), positions);
         return sc;
     }
 

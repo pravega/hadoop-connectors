@@ -67,30 +67,31 @@ public class PravegaInputFormatBuilder extends PravegaBuilder<PravegaInputFormat
     }
 
     /**
-     * Adds optional start positions to builder
+     * Adds optional start position to builder
      *
-     * generally, start positions are set to the end positions in previous job,
-     * so only new generated events will be processed, otherwise, start from very beginning.
+     * generally, start position are set to the end position in previous job,
+     * so only new generated events will be processed, otherwise, start from very beginning
+     * See also {@link #endPosition(String)}.
      *
      * @param startPos String
      * @return builder instance
      */
-    public PravegaInputFormatBuilder startPositions(String startPos) {
-        this.setString(PravegaConfig.INPUT_START_POSITIONS, startPos);
+    public PravegaInputFormatBuilder startPosition(String startPos) {
+        this.setString(PravegaConfig.INPUT_START_POSITION, startPos);
         return builder();
     }
 
     /**
-     * Adds optional end positions to builder, so the current job will only process events until these end positions inclusively
+     * Adds optional end position to builder, so the current job will only process events until these end position inclusively
      *
-     * The current latest positions can be retrieved by below code, and it shall be saved for future reference in most of cases
-     * String positions = PravegaInputFormat.fetchLatestPositionsJson("tcp://192.168.0.200:9090", "myScope", "myStream").
+     * The current latest position can be retrieved by below code, and it shall be saved for future reference in most of cases
+     * String position = PravegaInputFormat.fetchLatestPosition("tcp://192.168.0.200:9090", "myScope", "myStream").
      *
      * @param endPos String
      * @return builder instance
      */
-    public PravegaInputFormatBuilder endPositions(String endPos) {
-        this.setString(PravegaConfig.INPUT_END_POSITIONS, endPos);
+    public PravegaInputFormatBuilder endPosition(String endPos) {
+        this.setString(PravegaConfig.INPUT_END_POSITION, endPos);
         return builder();
     }
 

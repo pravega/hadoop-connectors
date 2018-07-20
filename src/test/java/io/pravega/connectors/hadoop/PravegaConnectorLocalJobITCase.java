@@ -102,7 +102,7 @@ public class PravegaConnectorLocalJobITCase {
             fs.delete(outputPath, true);
         }
 
-        String endPos1 = PravegaInputFormat.fetchLatestPositionsJson(
+        String endPos1 = PravegaInputFormat.fetchLatestPosition(
                 SETUP_UTILS.getControllerUri(), TEST_SCOPE, TEST_STREAM);
 
         // won't be read because it's written after end poisitions are fetched
@@ -125,7 +125,7 @@ public class PravegaConnectorLocalJobITCase {
         Assert.assertEquals(new Integer(1), counts.get("streamcut1"));
         Assert.assertEquals(new Integer(1), counts.get("endonly"));
 
-        // TEST 2: with both start and end positions
+        // TEST 2: with both start and end position
         writer.writeEvent("streamcut2 startandend");
         writer.flush();
 
@@ -134,7 +134,7 @@ public class PravegaConnectorLocalJobITCase {
             fs.delete(outputPath, true);
         }
 
-        String endPos2 = PravegaInputFormat.fetchLatestPositionsJson(
+        String endPos2 = PravegaInputFormat.fetchLatestPosition(
                 SETUP_UTILS.getControllerUri(), TEST_SCOPE, TEST_STREAM);
 
         // won't be read because it's written after end poisitions are fetched
@@ -152,7 +152,7 @@ public class PravegaConnectorLocalJobITCase {
         Assert.assertEquals(new Integer(1), counts.get("startandend"));
         Assert.assertEquals(new Integer(1), counts.get("onemore"));
 
-        // TEST 3: with start positions only
+        // TEST 3: with start position only
         writer.writeEvent("streamcut3 startonly");
         writer.flush();
 
@@ -183,8 +183,8 @@ public class PravegaConnectorLocalJobITCase {
             .forStream(TEST_STREAM)
             .withURI(SETUP_UTILS.getControllerUri())
             .withDeserializer(JavaSerializer.class.getName())
-            .startPositions(startPos)
-            .endPositions(endPos)
+            .startPosition(startPos)
+            .endPosition(endPos)
             .build();
 
         Job job = Job.getInstance(conf, "WordCount");

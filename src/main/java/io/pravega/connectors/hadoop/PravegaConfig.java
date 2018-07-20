@@ -16,8 +16,8 @@ public class PravegaConfig {
     public static final String INPUT_STREAM_NAME = "input.pravega.stream";
     public static final String INPUT_URI_STRING = "input.pravega.uri";
     public static final String INPUT_DESERIALIZER = "input.pravega.deserializer";
-    public static final String INPUT_START_POSITIONS = "input.pravega.startpositions";
-    public static final String INPUT_END_POSITIONS = "input.pravega.endpositions";
+    public static final String INPUT_START_POSITION = "input.pravega.startposition";
+    public static final String INPUT_END_POSITION = "input.pravega.endposition";
 
     public static final String OUTPUT_SCOPE_NAME = "output.pravega.scope";
     public static final String OUTPUT_STREAM_NAME = "output.pravega.stream";

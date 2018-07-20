@@ -18,6 +18,7 @@ import io.pravega.client.batch.BatchClient;
 import io.pravega.client.ClientFactory;
 import io.pravega.client.segment.impl.Segment;
 import io.pravega.client.stream.Stream;
+import io.pravega.client.stream.StreamCut;
 import io.pravega.client.stream.impl.StreamImpl;
 import io.pravega.client.stream.impl.StreamCutImpl;
 import io.pravega.connectors.hadoop.utils.IntegerSerializer;
@@ -30,16 +31,13 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.Base64;
 import java.util.concurrent.CompletableFuture;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
-import java.lang.reflect.Type;
 
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Mockito.mock;
@@ -78,25 +76,14 @@ public class PravegaInputFormatTest {
     }
 
     @Test
-    public void testFetchPositionsJson() throws IOException {
-        Map<Segment, Long> origPositions = genPositions(10);
+    public void testFetchPosition() throws IOException {
+        StreamCut sc = new StreamCutImpl(Stream.of(TEST_SCOPE, TEST_STREAM), genPositions(10));
+
         ClientFactory clientFactory = mockClientFactory();
-        String json = PravegaInputFormat.fetchPositionsJson(clientFactory, TEST_SCOPE, TEST_STREAM);
-        Assert.assertFalse(json.isEmpty());
+        String value = PravegaInputFormat.fetchPosition(clientFactory, TEST_SCOPE, TEST_STREAM);
 
-        Gson gson = new GsonBuilder()
-            .enableComplexMapKeySerialization().create();
-
-        Type type = new TypeToken<Map<Segment, Long>>() { }.getType();
-        Map<Segment, Long> parsedPositions = gson.fromJson(json, type);
-
-        Assert.assertEquals(origPositions.size(), parsedPositions.size());
-        for (Map.Entry<Segment, Long> entry : parsedPositions.entrySet()) {
-            Segment key = entry.getKey();
-            Long value = entry.getValue();
-            Assert.assertTrue(origPositions.containsKey(key));
-            Assert.assertEquals(value, origPositions.get(key));
-        }
+        ByteBuffer buf = ByteBuffer.wrap(Base64.getDecoder().decode(value));
+        Assert.assertEquals(sc, StreamCut.fromBytes(buf));
     }
 
     private JobContext getJobContext() throws Exception {
@@ -169,8 +156,8 @@ public class PravegaInputFormatTest {
             .forStream(params[idx++])
             .withURI(params[idx++])
             .withDeserializer(params[idx++])
-            .startPositions(params[idx++])
-            .endPositions(params[idx++])
+            .startPosition(params[idx++])
+            .endPosition(params[idx++])
             .build();
         checkJobConf(conf1, params);
 
@@ -183,8 +170,8 @@ public class PravegaInputFormatTest {
             .forStream(params[idx++])
             .withURI(params[idx++])
             .withDeserializer(params[idx++])
-            .startPositions(params[idx++])
-            .endPositions(params[idx++])
+            .startPosition(params[idx++])
+            .endPosition(params[idx++])
             .build();
         checkJobConf(conf2, params);
         Assert.assertEquals("something", conf2.get("OTHERS"));
@@ -197,7 +184,7 @@ public class PravegaInputFormatTest {
         Assert.assertEquals(conf.get(PravegaConfig.INPUT_STREAM_NAME), params[idx++]);
         Assert.assertEquals(conf.get(PravegaConfig.INPUT_URI_STRING), params[idx++]);
         Assert.assertEquals(conf.get(PravegaConfig.INPUT_DESERIALIZER), params[idx++]);
-        Assert.assertEquals(conf.get(PravegaConfig.INPUT_START_POSITIONS), params[idx++]);
-        Assert.assertEquals(conf.get(PravegaConfig.INPUT_END_POSITIONS), params[idx++]);
+        Assert.assertEquals(conf.get(PravegaConfig.INPUT_START_POSITION), params[idx++]);
+        Assert.assertEquals(conf.get(PravegaConfig.INPUT_END_POSITION), params[idx++]);
     }
 }
