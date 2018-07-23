@@ -74,8 +74,6 @@ dependencies {
         exclude group: 'log4j', module: 'log4j'
     }
 
-    compile group: 'com.google.code.gson', name: 'gson', version: gsonVersion
-
     testCompile group: 'junit', name: 'junit', version: junitVersion
     testCompile(group: 'io.pravega', name: 'pravega-standalone', version: pravegaVersion) {
         exclude group: 'com.sun.jersey', module: 'jersey-core'

@@ -12,18 +12,13 @@ package io.pravega.connectors.hadoop;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
 
 import io.pravega.client.ClientFactory;
 import io.pravega.client.batch.BatchClient;
 import io.pravega.client.batch.SegmentRange;
 import io.pravega.client.batch.StreamInfo;
-import io.pravega.client.segment.impl.Segment;
 import io.pravega.client.stream.Stream;
 import io.pravega.client.stream.StreamCut;
-import io.pravega.client.stream.impl.StreamCutImpl;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -32,12 +27,12 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.net.URI;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -45,18 +40,6 @@ import java.util.Optional;
  */
 public class PravegaInputFormat<V> extends InputFormat<EventKey, V> {
 
-    // Pravega scope name
-    public static final String SCOPE_NAME = "pravega.scope";
-    // Pravega stream name
-    public static final String STREAM_NAME = "pravega.stream";
-    // Pravega uri string
-    public static final String URI_STRING = "pravega.uri";
-    // Pravega deserializer class name
-    public static final String DESERIALIZER = "pravega.deserializer";
-    // Pravega optional start streamcut
-    public static final String START_POSITIONS = "pravega.startpositions";
-    // Pravega optional end streamcut
-    public static final String END_POSITIONS = "pravega.endpositions";
     // client factory
     private ClientFactory externalClientFactory;
 
@@ -83,23 +66,19 @@ public class PravegaInputFormat<V> extends InputFormat<EventKey, V> {
         // check parameters
         Configuration conf = context.getConfiguration();
 
-        final String scopeName = Optional.ofNullable(conf.get(PravegaInputFormat.SCOPE_NAME)).orElseThrow(() ->
-                new IOException("The input scope name must be configured (" + PravegaInputFormat.SCOPE_NAME + ")"));
-        final String streamName = Optional.ofNullable(conf.get(PravegaInputFormat.STREAM_NAME)).orElseThrow(() ->
-                new IOException("The input stream name must be configured (" + PravegaInputFormat.STREAM_NAME + ")"));
-        final URI controllerURI = Optional.ofNullable(conf.get(PravegaInputFormat.URI_STRING)).map(URI::create).orElseThrow(() ->
-                new IOException("The Pravega controller URI must be configured (" + PravegaInputFormat.URI_STRING + ")"));
-        final String deserializerClassName = Optional.ofNullable(conf.get(PravegaInputFormat.DESERIALIZER)).orElseThrow(() ->
-                new IOException("The event deserializer must be configured (" + PravegaInputFormat.DESERIALIZER + ")"));
+        final String scopeName = Optional.ofNullable(conf.get(PravegaConfig.INPUT_SCOPE_NAME)).orElseThrow(() ->
+                new IOException("The input scope name must be configured (" + PravegaConfig.INPUT_SCOPE_NAME + ")"));
+        final String streamName = Optional.ofNullable(conf.get(PravegaConfig.INPUT_STREAM_NAME)).orElseThrow(() ->
+                new IOException("The input stream name must be configured (" + PravegaConfig.INPUT_STREAM_NAME + ")"));
+        final URI controllerURI = Optional.ofNullable(conf.get(PravegaConfig.INPUT_URI_STRING)).map(URI::create).orElseThrow(() ->
+                new IOException("The Pravega controller URI must be configured (" + PravegaConfig.INPUT_URI_STRING + ")"));
+        final String deserializerClassName = Optional.ofNullable(conf.get(PravegaConfig.INPUT_DESERIALIZER)).orElseThrow(() ->
+                new IOException("The event deserializer must be configured (" + PravegaConfig.INPUT_DESERIALIZER + ")"));
 
-        final StreamCut startStreamCut = getStreamCutFromPositionsJson(
-                scopeName,
-                streamName,
-                Optional.ofNullable(conf.get(PravegaInputFormat.START_POSITIONS)).orElse(""));
-        final StreamCut endStreamCut = getStreamCutFromPositionsJson(
-                scopeName,
-                streamName,
-                Optional.ofNullable(conf.get(PravegaInputFormat.END_POSITIONS)).orElse(""));
+        final StreamCut startStreamCut = getStreamCutFromString(
+                Optional.ofNullable(conf.get(PravegaConfig.INPUT_START_POSITION)).orElse(""));
+        final StreamCut endStreamCut = getStreamCutFromString(
+                Optional.ofNullable(conf.get(PravegaConfig.INPUT_END_POSITION)).orElse(""));
 
         ClientFactory clientFactory = (externalClientFactory != null) ? externalClientFactory : ClientFactory.withScope(scopeName, controllerURI);
 
@@ -124,42 +103,53 @@ public class PravegaInputFormat<V> extends InputFormat<EventKey, V> {
         return new PravegaInputRecordReader<V>();
     }
 
-    public static String fetchLatestPositionsJson(String uri, String scopeName, String streamName) throws IOException {
+    public static String fetchLatestPosition(String uri, String scopeName, String streamName) throws IOException {
         Preconditions.checkArgument(uri != null && !uri.isEmpty());
         Preconditions.checkArgument(scopeName != null && !scopeName.isEmpty());
         Preconditions.checkArgument(streamName != null && !streamName.isEmpty());
 
         String pos = "";
         try (ClientFactory clientFactory = ClientFactory.withScope(scopeName, URI.create(uri))) {
-            pos = fetchPositionsJson(clientFactory, scopeName, streamName);
+            pos = fetchPosition(clientFactory, scopeName, streamName);
         }
         return pos;
     }
 
     @VisibleForTesting
-    public static String fetchPositionsJson(ClientFactory clientFactory, String scopeName, String streamName) throws IOException {
+    public static String fetchPosition(ClientFactory clientFactory, String scopeName, String streamName) throws IOException {
         BatchClient batchClient = clientFactory.createBatchClient();
         StreamInfo streamInfo = batchClient.getStreamInfo(Stream.of(scopeName, streamName)).join();
         StreamCut endStreamCut = streamInfo.getTailStreamCut();
-
-        Gson gson = new GsonBuilder()
-            .enableComplexMapKeySerialization().create();
-        return gson.toJson(endStreamCut.asImpl().getPositions());
+        return Base64.getEncoder().encodeToString(endStreamCut.toBytes().array());
     }
 
-    private StreamCut getStreamCutFromPositionsJson(String scopeName, String streamName, String s) throws IOException {
+    private StreamCut getStreamCutFromString(String value) throws IOException {
         StreamCut sc = null;
-        if (s == null || s.isEmpty()) {
+        if (value == null || value.isEmpty()) {
             return sc;
         }
 
-        Gson gson = new GsonBuilder()
-            .enableComplexMapKeySerialization().create();
+        ByteBuffer buf = ByteBuffer.wrap(Base64.getDecoder().decode(value));
+        sc = StreamCut.fromBytes(buf);
 
-        Type type = new TypeToken<Map<Segment, Long>>() { }.getType();
-        Map<Segment, Long> positions = gson.fromJson(s, type);
-
-        sc = new StreamCutImpl(Stream.of(scopeName, streamName), positions);
         return sc;
+    }
+
+    /**
+     * Gets a builder {@link PravegaInputFormat} to read Pravega streams using the batch API.
+     * @return {@link PravegaInputFormatBuilder}
+     */
+    public static PravegaInputFormatBuilder builder() {
+        return new PravegaInputFormatBuilder();
+    }
+
+    /**
+     * Gets a builder {@link PravegaInputFormat} to read Pravega streams using the batch API.
+     *
+     * @param conf Configuration
+     * @return {@link PravegaInputFormatBuilder}
+     */
+    public static PravegaInputFormatBuilder builder(Configuration conf) {
+        return new PravegaInputFormatBuilder(conf);
     }
 }
