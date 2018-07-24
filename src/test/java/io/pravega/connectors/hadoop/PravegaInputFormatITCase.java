@@ -77,10 +77,13 @@ public class PravegaInputFormatITCase {
     @Test
     public void testGetSplits() throws IOException, ExecutionException, InterruptedException {
         Configuration conf = new Configuration();
-        conf.setStrings(PravegaInputFormat.SCOPE_NAME, TEST_SCOPE);
-        conf.setStrings(PravegaInputFormat.STREAM_NAME, TEST_STREAM);
-        conf.setStrings(PravegaInputFormat.URI_STRING, SETUP_UTILS.getControllerUri());
-        conf.setStrings(PravegaInputFormat.DESERIALIZER, IntegerSerializer.class.getName());
+        conf = PravegaInputFormat.builder(conf)
+            .withScope(TEST_SCOPE)
+            .forStream(TEST_STREAM)
+            .withURI(SETUP_UTILS.getControllerUri())
+            .withDeserializer(IntegerSerializer.class.getName())
+            .build();
+
         Job job = new Job(conf);
 
         writeEvents(20, 0);

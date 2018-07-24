@@ -50,23 +50,23 @@ Test
 Usage
 -----
 ```
-        Configuration conf = new Configuration();
-
-        // optional to set start and end positions
-        // generally, start positions are set to the end positions in previous job,
-        // so only new generated events will be processed, otherwise, start from very beginning if not set
-        conf.setStrings(PravegaInputFormat.START_POSITIONS, startPos);
-        // fetch end positions
-        String endPos = PravegaInputFormat.fetchLatestPositionsJson("tcp://127.0.0.1:9090", "myScope", "myStream");
-        conf.setStrings(PravegaInputFormat.END_POSITIONS, endPos);
-
-        conf.setStrings(PravegaInputFormat.SCOPE_NAME, "myScope");
-        conf.setStrings(PravegaInputFormat.STREAM_NAME, "myStream");
-        conf.setStrings(PravegaInputFormat.URI_STRING, "tcp://127.0.0.1:9090");
-        conf.setStrings(PravegaInputFormat.DESERIALIZER, io.pravega.client.stream.impl.JavaSerializer.class.getName());
+        Configuration conf = PravegaInputFormat.builder()
+            .withScope("myScope")
+            .forStream("myStream")
+            .withURI("tcp://127.0.0.1:9090")
+            .withDeserializer(io.pravega.client.stream.impl.JavaSerializer.class.getName())
+            // optional to set start and end positions
+            // generally, start positions are set to the end positions in previous job,
+            // so only new generated events will be processed, otherwise, start from very beginning if not set
+            .startPositions(startPos)
+            .endPositions(endPos)
+            .build();
 
         Job job = new Job(conf);
         job.setInputFormatClass(PravegaInputFormat.class);
 
-        // FYI, Key class is 'EventKey', but you won't need it at most of the time.
+        // NOTE:
+        // 1. You have the option to use existing job 'Configuration' instance as the input parameter to create a builder
+        //     "PravegaInputFormat.builder(conf)"
+        // 2. Key class is 'EventKey', but you won't need it at most of the time.
 ```

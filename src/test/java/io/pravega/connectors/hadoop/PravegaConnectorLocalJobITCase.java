@@ -102,7 +102,7 @@ public class PravegaConnectorLocalJobITCase {
             fs.delete(outputPath, true);
         }
 
-        String endPos1 = PravegaInputFormat.fetchLatestPositionsJson(
+        String endPos1 = PravegaInputFormat.fetchLatestPosition(
                 SETUP_UTILS.getControllerUri(), TEST_SCOPE, TEST_STREAM);
 
         // won't be read because it's written after end poisitions are fetched
@@ -125,7 +125,7 @@ public class PravegaConnectorLocalJobITCase {
         Assert.assertEquals(new Integer(1), counts.get("streamcut1"));
         Assert.assertEquals(new Integer(1), counts.get("endonly"));
 
-        // TEST 2: with both start and end positions
+        // TEST 2: with both start and end position
         writer.writeEvent("streamcut2 startandend");
         writer.flush();
 
@@ -134,7 +134,7 @@ public class PravegaConnectorLocalJobITCase {
             fs.delete(outputPath, true);
         }
 
-        String endPos2 = PravegaInputFormat.fetchLatestPositionsJson(
+        String endPos2 = PravegaInputFormat.fetchLatestPosition(
                 SETUP_UTILS.getControllerUri(), TEST_SCOPE, TEST_STREAM);
 
         // won't be read because it's written after end poisitions are fetched
@@ -152,7 +152,7 @@ public class PravegaConnectorLocalJobITCase {
         Assert.assertEquals(new Integer(1), counts.get("startandend"));
         Assert.assertEquals(new Integer(1), counts.get("onemore"));
 
-        // TEST 3: with start positions only
+        // TEST 3: with start position only
         writer.writeEvent("streamcut3 startonly");
         writer.flush();
 
@@ -173,17 +173,20 @@ public class PravegaConnectorLocalJobITCase {
         Assert.assertEquals(new Integer(1), counts.get("startonly"));
     }
 
-    private Job configureJob(Configuration conf, Path outputPath, String startPos, String endPos) throws Exception {
-        conf.setStrings(PravegaInputFormat.START_POSITIONS, startPos);
-        conf.setStrings(PravegaInputFormat.END_POSITIONS, endPos);
-        return configureJob(conf, outputPath);
+    private Job configureJob(Configuration conf, Path outputPath) throws Exception {
+        return configureJob(conf, outputPath, "", "");
     }
 
-    private Job configureJob(Configuration conf, Path outputPath) throws Exception {
-        conf.setStrings(PravegaInputFormat.SCOPE_NAME, TEST_SCOPE);
-        conf.setStrings(PravegaInputFormat.STREAM_NAME, TEST_STREAM);
-        conf.setStrings(PravegaInputFormat.URI_STRING, SETUP_UTILS.getControllerUri());
-        conf.setStrings(PravegaInputFormat.DESERIALIZER, JavaSerializer.class.getName());
+    private Job configureJob(Configuration conf, Path outputPath, String startPos, String endPos) throws Exception {
+        conf = PravegaInputFormat.builder(conf)
+            .withScope(TEST_SCOPE)
+            .forStream(TEST_STREAM)
+            .withURI(SETUP_UTILS.getControllerUri())
+            .withDeserializer(JavaSerializer.class.getName())
+            .startPosition(startPos)
+            .endPosition(endPos)
+            .build();
+
         Job job = Job.getInstance(conf, "WordCount");
 
         job.setJarByClass(PravegaConnectorLocalJobITCase.class);

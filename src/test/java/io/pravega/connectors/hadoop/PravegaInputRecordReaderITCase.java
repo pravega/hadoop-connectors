@@ -115,12 +115,12 @@ public class PravegaInputRecordReaderITCase {
     }
 
     private Configuration getConfiguration(final String stream) {
-        Configuration conf = new Configuration();
-        conf.setStrings(PravegaInputFormat.SCOPE_NAME, TEST_SCOPE);
-        conf.setStrings(PravegaInputFormat.STREAM_NAME, stream);
-        conf.setStrings(PravegaInputFormat.URI_STRING, SETUP_UTILS.getControllerUri());
-        conf.setStrings(PravegaInputFormat.DESERIALIZER, IntegerSerializer.class.getName());
-        return conf;
+        return PravegaInputFormat.builder()
+            .withScope(TEST_SCOPE)
+            .forStream(stream)
+            .withURI(SETUP_UTILS.getControllerUri())
+            .withDeserializer(IntegerSerializer.class.getName())
+            .build();
     }
 
 }
