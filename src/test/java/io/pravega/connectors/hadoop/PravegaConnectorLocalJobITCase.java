@@ -228,6 +228,7 @@ public class PravegaConnectorLocalJobITCase {
         writer.writeEvent("string1");
         writer.writeEvent("string2 string3");
         writer.writeEvent("string4");
+        writer.flush();
 
         // setup local job runner
         outputPath = new Path("src/test/java/io/pravega/connectors/hadoop/localjobrunnertestdir1");
@@ -258,16 +259,20 @@ public class PravegaConnectorLocalJobITCase {
     }
 
     private Job configureJobWithInputAndOutput(Configuration conf, Path outputPath) throws Exception {
-        conf.setStrings(PravegaInputFormat.SCOPE_NAME, TEST_SCOPE);
-        conf.setStrings(PravegaInputFormat.STREAM_NAME, TEST_STREAM);
-        conf.setStrings(PravegaInputFormat.URI_STRING, SETUP_UTILS.getControllerUri());
-        conf.setStrings(PravegaInputFormat.DESERIALIZER, JavaSerializer.class.getName());
+        conf = PravegaInputFormat.builder(conf)
+            .withScope(TEST_SCOPE)
+            .forStream(TEST_STREAM)
+            .withURI(SETUP_UTILS.getControllerUri())
+            .withDeserializer(JavaSerializer.class.getName())
+            .build();
 
-        conf.setStrings(PravegaOutputFormat.SCOPE_NAME, TEST_SCOPE);
-        conf.setStrings(PravegaOutputFormat.STREAM_NAME, TEST_STREAM_OUT);
-        conf.setStrings(PravegaOutputFormat.URI_STRING, SETUP_UTILS.getControllerUri());
-        conf.setStrings(PravegaOutputFormat.SERIALIZER, JavaSerializer.class.getName());
-        conf.setInt(PravegaOutputFormat.SCALING, 2);
+        conf = PravegaOutputFormat.builder(conf)
+            .withScope(TEST_SCOPE)
+            .forStream(TEST_STREAM_OUT)
+            .withURI(SETUP_UTILS.getControllerUri())
+            .withSerializer(JavaSerializer.class.getName())
+            .withScaling(2)
+            .build();
 
         Job job = Job.getInstance(conf, "InAndOut");
 

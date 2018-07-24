@@ -40,18 +40,6 @@ import java.util.Optional;
  */
 public class PravegaInputFormat<V> extends InputFormat<EventKey, V> {
 
-    // Pravega scope name
-    public static final String SCOPE_NAME = "pravega.input.scope";
-    // Pravega stream name
-    public static final String STREAM_NAME = "pravega.input.stream";
-    // Pravega uri string
-    public static final String URI_STRING = "pravega.input.uri";
-    // Pravega deserializer class name
-    public static final String DESERIALIZER = "pravega.input.deserializer";
-    // Pravega optional start streamcut
-    public static final String START_POSITIONS = "pravega.input.startpositions";
-    // Pravega optional end streamcut
-    public static final String END_POSITIONS = "pravega.input.endpositions";
     // client factory
     private ClientFactory externalClientFactory;
 

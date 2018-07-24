@@ -14,7 +14,7 @@ Apache Hadoop connectors for Pravega.
 Description
 -----------
 
-Implementation of a Hadoop input format for Pravega (with wordcount examples). It leverages Pravega batch client to read all existing events in parallel.
+Implementation of a Hadoop input and output formats for Pravega. It leverages Pravega batch client to read existing events in parallel; and uses write API to write events to Pravega stream.
 
 Build
 -------
@@ -49,10 +49,11 @@ Test
 
 Usage
 -----
+Input Connector
 ```
         Configuration conf = PravegaInputFormat.builder()
             .withScope("myScope")
-            .forStream("myStream")
+            .forStream("myInputStream")
             .withURI("tcp://127.0.0.1:9090")
             .withDeserializer(io.pravega.client.stream.impl.JavaSerializer.class.getName())
             // optional to set start and end positions
@@ -69,4 +70,21 @@ Usage
         // 1. You have the option to use existing job 'Configuration' instance as the input parameter to create a builder
         //     "PravegaInputFormat.builder(conf)"
         // 2. Key class is 'EventKey', but you won't need it at most of the time.
+```
+Output Connector
+```
+        Configuration conf = PravegaOutputFormat.builder()
+            .withScope("myScope")
+            .forStream("myOutputStream")
+            .withURI("tcp://127.0.0.1:9090")
+            .withSerializer(io.pravega.client.stream.impl.JavaSerializer.class.getName())
+            // optional to set the scaling of output stream, 1 by default
+            .withScaling(3)
+            .build();
+
+        Job job = new Job(conf);
+        job.setOutputFormatClass(PravegaOutputFormat.class);
+        // NOTE:
+        // 1. You have the option to use existing job 'Configuration' instance as the output parameter to create a builder
+        //     "PravegaOutputFormat.builder(conf)"
 ```

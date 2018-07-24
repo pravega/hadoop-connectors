@@ -40,17 +40,6 @@ import org.slf4j.LoggerFactory;
  */
 public class PravegaOutputFormat<V> extends OutputFormat<NullWritable, V> {
 
-    // Pravega scope name
-    public static final String SCOPE_NAME = "pravega.output.scope";
-    // Pravega stream name
-    public static final String STREAM_NAME = "pravega.output.stream";
-    // Pravega uri string
-    public static final String URI_STRING = "pravega.output.uri";
-    // Pravega serializer class name
-    public static final String SERIALIZER = "pravega.output.serializer";
-    // Pravega scaling policy fixed number of active segments
-    public static final String SCALING = "pravega.output.scalingpolicyfixed";
-
     // TODO: make it configurable when implementing build stype api (Issue 40)
     private static final long DEFAULT_TXN_TIMEOUT_MS = 30000L;
 
@@ -70,14 +59,14 @@ public class PravegaOutputFormat<V> extends OutputFormat<NullWritable, V> {
     @Override
     public RecordWriter<NullWritable, V> getRecordWriter(TaskAttemptContext context) throws IOException, InterruptedException {
         Configuration conf = context.getConfiguration();
-        final String scopeName = Optional.ofNullable(conf.get(PravegaOutputFormat.SCOPE_NAME)).orElseThrow(() ->
-                new IOException("The input scope name must be configured (" + PravegaOutputFormat.SCOPE_NAME + ")"));
-        final String streamName = Optional.ofNullable(conf.get(PravegaOutputFormat.STREAM_NAME)).orElseThrow(() ->
-                new IOException("The input stream name must be configured (" + PravegaOutputFormat.STREAM_NAME + ")"));
-        final URI controllerURI = Optional.ofNullable(conf.get(PravegaOutputFormat.URI_STRING)).map(URI::create).orElseThrow(() ->
-                new IOException("The Pravega controller URI must be configured (" + PravegaOutputFormat.URI_STRING + ")"));
-        final String serializerClassName = Optional.ofNullable(conf.get(PravegaOutputFormat.SERIALIZER)).orElseThrow(() ->
-                new IOException("The event serializer must be configured (" + PravegaOutputFormat.SERIALIZER + ")"));
+        final String scopeName = Optional.ofNullable(conf.get(PravegaConfig.OUTPUT_SCOPE_NAME)).orElseThrow(() ->
+                new IOException("The input scope name must be configured (" + PravegaConfig.OUTPUT_SCOPE_NAME + ")"));
+        final String streamName = Optional.ofNullable(conf.get(PravegaConfig.OUTPUT_STREAM_NAME)).orElseThrow(() ->
+                new IOException("The input stream name must be configured (" + PravegaConfig.OUTPUT_STREAM_NAME + ")"));
+        final URI controllerURI = Optional.ofNullable(conf.get(PravegaConfig.OUTPUT_URI_STRING)).map(URI::create).orElseThrow(() ->
+                new IOException("The Pravega controller URI must be configured (" + PravegaConfig.OUTPUT_URI_STRING + ")"));
+        final String serializerClassName = Optional.ofNullable(conf.get(PravegaConfig.OUTPUT_SERIALIZER)).orElseThrow(() ->
+                new IOException("The event serializer must be configured (" + PravegaConfig.OUTPUT_SERIALIZER + ")"));
 
         return new PravegaOutputRecordWriter<>(getPravegaWriter(scopeName, streamName, controllerURI, serializerClassName));
     }
@@ -122,14 +111,14 @@ public class PravegaOutputFormat<V> extends OutputFormat<NullWritable, V> {
 
         public void setupJob(JobContext context) throws IOException {
             Configuration conf = context.getConfiguration();
-            final String scopeName = Optional.ofNullable(conf.get(PravegaOutputFormat.SCOPE_NAME)).orElseThrow(() ->
-                new IOException("The input scope name must be configured (" + PravegaOutputFormat.SCOPE_NAME + ")"));
-            final String streamName = Optional.ofNullable(conf.get(PravegaOutputFormat.STREAM_NAME)).orElseThrow(() ->
-                new IOException("The input stream name must be configured (" + PravegaOutputFormat.STREAM_NAME + ")"));
-            final URI controllerURI = Optional.ofNullable(conf.get(PravegaOutputFormat.URI_STRING)).map(URI::create).orElseThrow(() ->
-                new IOException("The Pravega controller URI must be configured (" + PravegaOutputFormat.URI_STRING + ")"));
+            final String scopeName = Optional.ofNullable(conf.get(PravegaConfig.OUTPUT_SCOPE_NAME)).orElseThrow(() ->
+                new IOException("The input scope name must be configured (" + PravegaConfig.OUTPUT_SCOPE_NAME + ")"));
+            final String streamName = Optional.ofNullable(conf.get(PravegaConfig.OUTPUT_STREAM_NAME)).orElseThrow(() ->
+                new IOException("The input stream name must be configured (" + PravegaConfig.OUTPUT_STREAM_NAME + ")"));
+            final URI controllerURI = Optional.ofNullable(conf.get(PravegaConfig.OUTPUT_URI_STRING)).map(URI::create).orElseThrow(() ->
+                new IOException("The Pravega controller URI must be configured (" + PravegaConfig.OUTPUT_URI_STRING + ")"));
 
-            int inputScaling = conf.getInt(PravegaOutputFormat.SCALING, 0);
+            int inputScaling = Integer.parseInt(conf.get(PravegaConfig.OUTPUT_SCALING, "0"));
             final int scaling = inputScaling > 0 ? inputScaling : 1;
 
             createStream(scopeName, streamName, controllerURI, scaling);
@@ -146,5 +135,23 @@ public class PravegaOutputFormat<V> extends OutputFormat<NullWritable, V> {
 
             streamManager.createStream(scopeName, streamName, streamConfig);
         }
+    }
+
+    /**
+     * Gets a builder {@link PravegaOutputFormat} to write events to Pravega stream.
+     * @return {@link PravegaOutputFormatBuilder}
+     */
+    public static PravegaOutputFormatBuilder builder() {
+        return new PravegaOutputFormatBuilder();
+    }
+
+    /**
+     * Gets a builder {@link PravegaOutputFormat} to write events to Pravega stream.
+     *
+     * @param conf Configuration
+     * @return {@link PravegaOutputFormatBuilder}
+     */
+    public static PravegaOutputFormatBuilder builder(Configuration conf) {
+        return new PravegaOutputFormatBuilder(conf);
     }
 }
