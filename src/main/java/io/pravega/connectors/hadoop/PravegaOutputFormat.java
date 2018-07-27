@@ -60,9 +60,9 @@ public class PravegaOutputFormat<V> extends OutputFormat<NullWritable, V> {
     public RecordWriter<NullWritable, V> getRecordWriter(TaskAttemptContext context) throws IOException, InterruptedException {
         Configuration conf = context.getConfiguration();
         final String scopeName = Optional.ofNullable(conf.get(PravegaConfig.OUTPUT_SCOPE_NAME)).orElseThrow(() ->
-                new IOException("The input scope name must be configured (" + PravegaConfig.OUTPUT_SCOPE_NAME + ")"));
+                new IOException("The output scope name must be configured (" + PravegaConfig.OUTPUT_SCOPE_NAME + ")"));
         final String streamName = Optional.ofNullable(conf.get(PravegaConfig.OUTPUT_STREAM_NAME)).orElseThrow(() ->
-                new IOException("The input stream name must be configured (" + PravegaConfig.OUTPUT_STREAM_NAME + ")"));
+                new IOException("The output stream name must be configured (" + PravegaConfig.OUTPUT_STREAM_NAME + ")"));
         final URI controllerURI = Optional.ofNullable(conf.get(PravegaConfig.OUTPUT_URI_STRING)).map(URI::create).orElseThrow(() ->
                 new IOException("The Pravega controller URI must be configured (" + PravegaConfig.OUTPUT_URI_STRING + ")"));
         final String serializerClassName = Optional.ofNullable(conf.get(PravegaConfig.OUTPUT_SERIALIZER)).orElseThrow(() ->
@@ -112,9 +112,9 @@ public class PravegaOutputFormat<V> extends OutputFormat<NullWritable, V> {
         public void setupJob(JobContext context) throws IOException {
             Configuration conf = context.getConfiguration();
             final String scopeName = Optional.ofNullable(conf.get(PravegaConfig.OUTPUT_SCOPE_NAME)).orElseThrow(() ->
-                new IOException("The input scope name must be configured (" + PravegaConfig.OUTPUT_SCOPE_NAME + ")"));
+                new IOException("The output scope name must be configured (" + PravegaConfig.OUTPUT_SCOPE_NAME + ")"));
             final String streamName = Optional.ofNullable(conf.get(PravegaConfig.OUTPUT_STREAM_NAME)).orElseThrow(() ->
-                new IOException("The input stream name must be configured (" + PravegaConfig.OUTPUT_STREAM_NAME + ")"));
+                new IOException("The output stream name must be configured (" + PravegaConfig.OUTPUT_STREAM_NAME + ")"));
             final URI controllerURI = Optional.ofNullable(conf.get(PravegaConfig.OUTPUT_URI_STRING)).map(URI::create).orElseThrow(() ->
                 new IOException("The Pravega controller URI must be configured (" + PravegaConfig.OUTPUT_URI_STRING + ")"));
 

@@ -71,12 +71,14 @@ public class PravegaOutputRecordWriter<V> extends RecordWriter<NullWritable, V> 
 
     @Override
     public void close(TaskAttemptContext taskAttemptContext) throws IOException, InterruptedException {
-
-        flushAndVerify();
-
-        this.writer.close();
-
-        this.executorService.shutdown();
+        try {
+            flushAndVerify();
+        } catch (IOException | InterruptedException e) {
+            throw e;
+        } finally {
+            this.writer.close();
+            this.executorService.shutdown();
+        }
     }
 
     private void checkWriteError() throws IOException {
