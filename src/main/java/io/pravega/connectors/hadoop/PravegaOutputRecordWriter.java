@@ -38,12 +38,14 @@ public class PravegaOutputRecordWriter<V> extends RecordWriter<NullWritable, V> 
     private final AtomicReference<Throwable> writeError;
     private final ExecutorService executorService;
     private final EventStreamWriter writer;
+    private final PravegaEventRouter<V> pravegaEventRouter;
 
-    public PravegaOutputRecordWriter(EventStreamWriter writer) {
+    public PravegaOutputRecordWriter(EventStreamWriter writer, PravegaEventRouter<V> pravegaEventRouter) {
         this.writer = writer;
         this.pendingWritesCount = new AtomicInteger(0);
         this.writeError = new AtomicReference<>(null);
         this.executorService = Executors.newFixedThreadPool(5);
+        this.pravegaEventRouter = pravegaEventRouter;
     }
 
     @Override
@@ -52,8 +54,8 @@ public class PravegaOutputRecordWriter<V> extends RecordWriter<NullWritable, V> 
         checkWriteError();
 
         this.pendingWritesCount.incrementAndGet();
-        // write to segments randomly because we don't care which segment to write
-        final CompletableFuture<Void> future = writer.writeEvent(UUID.randomUUID().toString(), value);
+        String routingKey = (pravegaEventRouter == null) ? UUID.randomUUID().toString() : pravegaEventRouter.getRoutingKey(value);
+        final CompletableFuture<Void> future = writer.writeEvent(routingKey, value);
         future.whenCompleteAsync(
             (v, e) -> {
                 if (e != null) {

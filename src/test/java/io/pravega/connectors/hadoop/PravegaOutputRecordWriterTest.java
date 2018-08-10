@@ -31,7 +31,7 @@ public class PravegaOutputRecordWriterTest {
         EventStreamWriter writer = mockEventStreamWriter();
         List<CompletableFuture<Void>> futures = mockWrite(writer);
 
-        PravegaOutputRecordWriter<Integer> outputWriter = new PravegaOutputRecordWriter<>(writer);
+        PravegaOutputRecordWriter<Integer> outputWriter = new PravegaOutputRecordWriter<>(writer, null);
         outputWriter.write(NullWritable.get(), 10);
         Assert.assertEquals(1, outputWriter.pendingWritesCount.get());
         outputWriter.write(NullWritable.get(), 20);

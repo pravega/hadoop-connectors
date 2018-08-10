@@ -20,6 +20,7 @@ import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.URI;
 import java.util.Optional;
 
@@ -68,7 +69,10 @@ public class PravegaOutputFormat<V> extends OutputFormat<NullWritable, V> {
         final String serializerClassName = Optional.ofNullable(conf.get(PravegaConfig.OUTPUT_SERIALIZER)).orElseThrow(() ->
                 new IOException("The event serializer must be configured (" + PravegaConfig.OUTPUT_SERIALIZER + ")"));
 
-        return new PravegaOutputRecordWriter<>(getPravegaWriter(scopeName, streamName, controllerURI, serializerClassName));
+        final String eventRouterClassName = conf.get(PravegaConfig.OUTPUT_EVENT_ROUTER);
+        PravegaEventRouter<V> pravegaEventRouter = getEventRouter(eventRouterClassName);
+
+        return new PravegaOutputRecordWriter<>(getPravegaWriter(scopeName, streamName, controllerURI, serializerClassName), pravegaEventRouter);
     }
 
     @Override
@@ -80,6 +84,21 @@ public class PravegaOutputFormat<V> extends OutputFormat<NullWritable, V> {
         return new PravegaOutputCommitter(new Path("/tmp/" + taskAttemptContext.getTaskAttemptID().getJobID().toString()), taskAttemptContext);
     }
 
+    private PravegaEventRouter<V> getEventRouter(String eventRouterClassName) throws IOException {
+        PravegaEventRouter<V> serializer = null;
+        if (eventRouterClassName != null) {
+            try {
+                Class<?> serializerClass = Class.forName(eventRouterClassName);
+                serializer = (PravegaEventRouter<V>) serializerClass.newInstance();
+            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+                log.error("Exception when creating serializer: {}", e);
+                throw new IOException(
+                        "Unable to create the serializer for event router (" + eventRouterClassName + ")", e);
+            }
+        }
+        return serializer;
+    }
+
     private EventStreamWriter<V> getPravegaWriter(
             String scopeName,
             String streamName,
@@ -88,6 +107,7 @@ public class PravegaOutputFormat<V> extends OutputFormat<NullWritable, V> {
         ClientFactory clientFactory = (externalClientFactory != null) ? externalClientFactory : ClientFactory.withScope(scopeName, controllerURI);
 
         Serializer serializer;
+
         try {
             Class<?> serializerClass = Class.forName(serializerClassName);
             serializer = (Serializer<V>) serializerClass.newInstance();

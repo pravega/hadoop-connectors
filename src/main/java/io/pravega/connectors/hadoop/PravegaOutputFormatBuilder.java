@@ -66,6 +66,16 @@ public class PravegaOutputFormatBuilder extends PravegaBuilder<PravegaOutputForm
         return builder();
     }
 
+    /** Adds PravegaEventRouter class name to builder.
+     *
+     * @param className String
+     * @return builder instance
+     */
+    public PravegaOutputFormatBuilder withEventRouter(String className) {
+        this.setString(PravegaConfig.OUTPUT_EVENT_ROUTER, className);
+        return builder();
+    }
+
     /** set scaling of output stream.
      *
      * @param scaling int

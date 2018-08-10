@@ -271,6 +271,7 @@ public class PravegaConnectorLocalJobITCase {
             .forStream(TEST_STREAM_OUT)
             .withURI(SETUP_UTILS.getControllerUri())
             .withSerializer(JavaSerializer.class.getName())
+            .withEventRouter(EventRouter.class.getName())
             .withScaling(2)
             .build();
 
@@ -289,5 +290,16 @@ public class PravegaConnectorLocalJobITCase {
 
         FileOutputFormat.setOutputPath(job, outputPath);
         return job;
+    }
+
+    /**
+     * A fixed key event router for testing
+     */
+    public static class EventRouter implements PravegaEventRouter<String> {
+
+        @Override
+        public String getRoutingKey(String event) {
+            return "fixedKey";
+        }
     }
 }
