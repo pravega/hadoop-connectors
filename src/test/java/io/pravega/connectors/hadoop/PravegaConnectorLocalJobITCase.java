@@ -293,7 +293,7 @@ public class PravegaConnectorLocalJobITCase {
     }
 
     /**
-     * A fixed key event router for testing
+     * A fixed key event router for testing.
      */
     public static class EventRouter implements PravegaEventRouter<String> {
 

@@ -20,7 +20,6 @@ import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.net.URI;
 import java.util.Optional;
 
