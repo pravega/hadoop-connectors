@@ -17,6 +17,7 @@ import java.io.Serializable;
  *
  * @param <T> The type of the event.
  */
+@FunctionalInterface
 public interface PravegaEventRouter<T> extends Serializable {
     /**
      * Fetch the routing key for the given event.

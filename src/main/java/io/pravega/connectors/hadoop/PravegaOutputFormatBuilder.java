@@ -27,14 +27,22 @@ public class PravegaOutputFormatBuilder extends PravegaBuilder<PravegaOutputForm
 
     @Override
     public void check() {
-        String[] paramsToCheck = new String[]{
-            PravegaConfig.OUTPUT_SCOPE_NAME,
-            PravegaConfig.OUTPUT_STREAM_NAME,
+        String[] paramsToCheck = new String[] {
             PravegaConfig.OUTPUT_URI_STRING,
-            PravegaConfig.OUTPUT_SERIALIZER};
+            PravegaConfig.OUTPUT_SERIALIZER
+        };
 
         for (String param : paramsToCheck) {
             Preconditions.checkArgument(!this.settings.getOrDefault(param, "").isEmpty());
+        }
+
+        String stream = this.settings.getOrDefault(PravegaConfig.OUTPUT_STREAM_NAME, "");
+        Preconditions.checkArgument(!stream.isEmpty());
+
+        String scope = this.settings.getOrDefault(PravegaConfig.OUTPUT_SCOPE_NAME, "");
+        if (scope.isEmpty()) {
+            // check if scope is supplied as qualified stream name
+            Preconditions.checkArgument(stream.split("/").length == 2);
         }
     }
 

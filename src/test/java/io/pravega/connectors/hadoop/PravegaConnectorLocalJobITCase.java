@@ -56,6 +56,7 @@ public class PravegaConnectorLocalJobITCase {
         // setup pravega server
         SETUP_UTILS.startAllServices(TEST_SCOPE);
         SETUP_UTILS.createTestStream(TEST_STREAM, NUM_SEGMENTS);
+        SETUP_UTILS.createTestStream(TEST_STREAM_OUT, NUM_SEGMENTS);
         writer = SETUP_UTILS.getStringWriter(TEST_STREAM);
     }
 
