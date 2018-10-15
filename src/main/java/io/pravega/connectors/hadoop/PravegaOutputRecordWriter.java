@@ -24,7 +24,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.UUID;
 
 /**
  * A RecordWriter that can write events to Pravega.
@@ -34,6 +33,7 @@ public class PravegaOutputRecordWriter<V> extends RecordWriter<NullWritable, V> 
 
     private static final Logger log = LoggerFactory.getLogger(PravegaOutputRecordWriter.class);
 
+    private static final int THREAD_POOL = 5;
     protected final AtomicInteger pendingWritesCount;
     private final AtomicReference<Throwable> writeError;
     private final ExecutorService executorService;
@@ -44,7 +44,7 @@ public class PravegaOutputRecordWriter<V> extends RecordWriter<NullWritable, V> 
         this.writer = writer;
         this.pendingWritesCount = new AtomicInteger(0);
         this.writeError = new AtomicReference<>(null);
-        this.executorService = Executors.newFixedThreadPool(5);
+        this.executorService = Executors.newFixedThreadPool(THREAD_POOL);
         this.pravegaEventRouter = pravegaEventRouter;
     }
 
@@ -54,8 +54,11 @@ public class PravegaOutputRecordWriter<V> extends RecordWriter<NullWritable, V> 
         checkWriteError();
 
         this.pendingWritesCount.incrementAndGet();
-        String routingKey = (pravegaEventRouter == null) ? UUID.randomUUID().toString() : pravegaEventRouter.getRoutingKey(value);
-        final CompletableFuture<Void> future = writer.writeEvent(routingKey, value);
+
+        final CompletableFuture<Void> future =
+                (pravegaEventRouter == null) ? writer.writeEvent(value) :
+                        writer.writeEvent(pravegaEventRouter.getRoutingKey(value), value);
+
         future.whenCompleteAsync(
             (v, e) -> {
                 if (e != null) {

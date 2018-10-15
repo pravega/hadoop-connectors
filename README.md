@@ -14,7 +14,7 @@ Apache Hadoop connectors for Pravega.
 Description
 -----------
 
-Implementation of a Hadoop input and output formats for Pravega. It leverages Pravega batch client to read existing events in parallel; and uses write API to write events to Pravega stream.
+Implements both the input and the output format interfaces for Hadoop. It leverages Pravega batch client to read existing events in parallel; and uses write API to write events to Pravega stream.
 
 Build
 -------

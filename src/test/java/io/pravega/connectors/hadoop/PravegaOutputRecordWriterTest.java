@@ -64,6 +64,7 @@ public class PravegaOutputRecordWriterTest {
             futures.add(new CompletableFuture<Void>());
         }
         Mockito.when(writer.writeEvent(anyString(), anyObject())).thenReturn(futures.get(0), futures.get(1), futures.get(2));
+        Mockito.when(writer.writeEvent(anyObject())).thenReturn(futures.get(0), futures.get(1), futures.get(2));
         return futures;
     }
 

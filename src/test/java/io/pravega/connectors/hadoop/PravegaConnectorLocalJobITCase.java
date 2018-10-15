@@ -273,7 +273,6 @@ public class PravegaConnectorLocalJobITCase {
             .withURI(SETUP_UTILS.getControllerUri())
             .withSerializer(JavaSerializer.class.getName())
             .withEventRouter(EventRouter.class.getName())
-            .withScaling(2)
             .build();
 
         Job job = Job.getInstance(conf, "InAndOut");

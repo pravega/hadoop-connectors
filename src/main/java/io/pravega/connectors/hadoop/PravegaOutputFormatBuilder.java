@@ -14,7 +14,7 @@ import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
 
 /**
- * A pravega hadoop output connector builder.
+ * A builder abstraction to capture {@link PravegaOutputFormat} configurations.
  *
  */
 public class PravegaOutputFormatBuilder extends PravegaBuilder<PravegaOutputFormatBuilder> {
@@ -66,7 +66,7 @@ public class PravegaOutputFormatBuilder extends PravegaBuilder<PravegaOutputForm
 
     /** Adds Serializer class name to builder.
      *
-     * @param className String
+     * @param className a fully qualified class name of the serializer
      * @return builder instance
      */
     public PravegaOutputFormatBuilder withSerializer(String className) {
@@ -76,21 +76,11 @@ public class PravegaOutputFormatBuilder extends PravegaBuilder<PravegaOutputForm
 
     /** Adds PravegaEventRouter class name to builder.
      *
-     * @param className String
+     * @param className a fully qualified class name of the event router
      * @return builder instance
      */
     public PravegaOutputFormatBuilder withEventRouter(String className) {
         this.setString(PravegaConfig.OUTPUT_EVENT_ROUTER, className);
-        return builder();
-    }
-
-    /** set scaling of output stream.
-     *
-     * @param scaling int
-     * @return builder instance
-     */
-    public PravegaOutputFormatBuilder withScaling(int scaling) {
-        this.setString(PravegaConfig.OUTPUT_SCALING, String.valueOf(scaling));
         return builder();
     }
 
