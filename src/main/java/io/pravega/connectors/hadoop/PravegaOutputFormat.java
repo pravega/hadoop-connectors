@@ -111,7 +111,7 @@ public class PravegaOutputFormat<V> extends OutputFormat<NullWritable, V> {
                 new IOException("The event serializer must be configured (" + PravegaConfig.OUTPUT_SERIALIZER + ")"));
 
         Object router = getInstanceFromName(conf.get(PravegaConfig.OUTPUT_EVENT_ROUTER));
-        if (!PravegaEventRouter.class.isAssignableFrom(router.getClass())) {
+        if (router != null && !PravegaEventRouter.class.isAssignableFrom(router.getClass())) {
             throw new IOException(router.getClass() + " is not a type of PravegaEventRouter");
         }
         @SuppressWarnings("unchecked")
