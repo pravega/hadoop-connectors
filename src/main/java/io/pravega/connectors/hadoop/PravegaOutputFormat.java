@@ -16,9 +16,11 @@ import io.pravega.client.stream.EventStreamWriter;
 import io.pravega.client.stream.EventWriterConfig;
 import io.pravega.client.stream.Serializer;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Optional;
+import java.util.Random;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -50,7 +52,12 @@ public class PravegaOutputFormat<V> extends OutputFormat<NullWritable, V> {
 
     @Override
     public OutputCommitter getOutputCommitter(TaskAttemptContext taskAttemptContext) throws IOException, InterruptedException {
-        return new FileOutputCommitter(new Path("/tmp/" + taskAttemptContext.getTaskAttemptID().getJobID().toString()), taskAttemptContext);
+        final String tempDir = System.getProperty("java.io.tmpdir");
+        final String randomId = String.valueOf(new Random(System.nanoTime()).nextInt());
+        final String jobId = taskAttemptContext.getTaskAttemptID().getJobID().toString();
+        StringBuilder path = new StringBuilder();
+        path.append(tempDir).append(File.separator).append(jobId).append("-").append(randomId);
+        return new FileOutputCommitter(new Path(path.toString()), taskAttemptContext);
     }
 
     private Object getInstanceFromName(String className) throws IOException {
