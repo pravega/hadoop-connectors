@@ -10,6 +10,7 @@
 
 package io.pravega.connectors.hadoop;
 
+import io.pravega.client.stream.EventStreamReader;
 import io.pravega.client.stream.EventStreamWriter;
 import io.pravega.client.stream.impl.JavaSerializer;
 import io.pravega.connectors.hadoop.utils.SetupUtils;
@@ -19,9 +20,10 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.mapreduce.Job;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -30,14 +32,17 @@ import org.junit.Test;
 import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 
 public class PravegaConnectorLocalJobITCase {
 
     private static final String TEST_SCOPE = "PravegaConnectorLocalJobITCase";
     private static final String TEST_STREAM = "stream";
+    private static final String TEST_STREAM_OUT = "streamout";
     private static final int NUM_SEGMENTS = 3;
     private static final SetupUtils SETUP_UTILS = new SetupUtils();
 
@@ -51,19 +56,20 @@ public class PravegaConnectorLocalJobITCase {
         // setup pravega server
         SETUP_UTILS.startAllServices(TEST_SCOPE);
         SETUP_UTILS.createTestStream(TEST_STREAM, NUM_SEGMENTS);
+        SETUP_UTILS.createTestStream(TEST_STREAM_OUT, NUM_SEGMENTS);
         writer = SETUP_UTILS.getStringWriter(TEST_STREAM);
     }
 
     @After
     public void tearDownPravega() throws Exception {
         SETUP_UTILS.stopAllServices();
-        if (fs.exists(outputPath)) {
+        if (outputPath != null && fs.exists(outputPath)) {
             fs.delete(outputPath, true);
         }
     }
 
     @Test
-    public void testPravegaConnector() throws Exception {
+    public void testPravegaConnectorInput() throws Exception {
         // TEST 0: without start or end
         writer.writeEvent("begin");
         writer.writeEvent("pravega local job test");
@@ -214,5 +220,86 @@ public class PravegaConnectorLocalJobITCase {
             }
         }
         return m;
+    }
+
+    @Test
+    public void testPravegaConnectorOutput() throws Exception {
+
+        // TEST 0: without start or end
+        writer.writeEvent("string1");
+        writer.writeEvent("string2 string3");
+        writer.writeEvent("string4");
+        writer.flush();
+
+        // setup local job runner
+        outputPath = new Path("src/test/java/io/pravega/connectors/hadoop/localjobrunnertestdir1");
+        Configuration conf = new Configuration();
+        conf.set("mapred.job.tracker", "local");
+        conf.set("fs.default.name", "file:///");
+
+        fs = FileSystem.getLocal(conf);
+        if (fs.exists(outputPath)) {
+            fs.delete(outputPath, true);
+        }
+
+        job = configureJobWithInputAndOutput(conf, outputPath);
+        boolean status = job.waitForCompletion(true);
+        Assert.assertTrue(job.isSuccessful());
+
+        EventStreamReader<String> reader = SETUP_UTILS.getStringReader(TEST_STREAM_OUT);
+        Set<String> result = new HashSet();
+        for (int i = 0; i < 4; i++) {
+            String event = reader.readNextEvent(1000).getEvent();
+            result.add(event);
+        }
+
+        String[] expected = new String[]{"string1", "string2", "string3", "string4"};
+        for (String s : expected) {
+            Assert.assertTrue(result.contains(s));
+        }
+    }
+
+    private Job configureJobWithInputAndOutput(Configuration conf, Path outputPath) throws Exception {
+        conf = PravegaInputFormat.builder(conf)
+            .withScope(TEST_SCOPE)
+            .forStream(TEST_STREAM)
+            .withURI(SETUP_UTILS.getControllerUri())
+            .withDeserializer(JavaSerializer.class.getName())
+            .build();
+
+        conf = PravegaOutputFormat.builder(conf)
+            .withScope(TEST_SCOPE)
+            .forStream(TEST_STREAM_OUT)
+            .withURI(SETUP_UTILS.getControllerUri())
+            .withSerializer(JavaSerializer.class.getName())
+            .withEventRouter(EventRouter.class.getName())
+            .build();
+
+        Job job = Job.getInstance(conf, "InAndOut");
+
+        job.setJarByClass(PravegaConnectorLocalJobITCase.class);
+
+        job.setMapperClass(SimpleMapper.class);
+        job.setNumReduceTasks(0);
+
+        job.setOutputKeyClass(NullWritable.class);
+        job.setOutputValueClass(String.class);
+        // what we really want to test
+        job.setInputFormatClass(PravegaInputFormat.class);
+        job.setOutputFormatClass(PravegaOutputFormat.class);
+
+        FileOutputFormat.setOutputPath(job, outputPath);
+        return job;
+    }
+
+    /**
+     * A fixed key event router for testing.
+     */
+    public static class EventRouter implements PravegaEventRouter<String> {
+
+        @Override
+        public String getRoutingKey(String event) {
+            return "fixedKey";
+        }
     }
 }

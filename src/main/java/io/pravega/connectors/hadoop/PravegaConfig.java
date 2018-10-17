@@ -23,4 +23,5 @@ public class PravegaConfig {
     public static final String OUTPUT_STREAM_NAME = "output.pravega.stream";
     public static final String OUTPUT_URI_STRING = "output.pravega.uri";
     public static final String OUTPUT_SERIALIZER = "output.pravega.serializer";
+    public static final String OUTPUT_EVENT_ROUTER = "output.pravega.eventRouter";
 }
