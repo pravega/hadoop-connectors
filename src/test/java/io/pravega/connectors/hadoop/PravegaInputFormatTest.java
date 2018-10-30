@@ -10,6 +10,7 @@
 
 package io.pravega.connectors.hadoop;
 
+import io.pravega.client.admin.StreamManager;
 import io.pravega.client.batch.SegmentRange;
 import io.pravega.client.batch.StreamInfo;
 import io.pravega.client.batch.StreamSegmentsIterator;
@@ -40,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.mockito.Matchers.anyObject;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 
 public class PravegaInputFormatTest {
@@ -79,8 +81,8 @@ public class PravegaInputFormatTest {
     public void testFetchPosition() throws IOException {
         StreamCut sc = new StreamCutImpl(Stream.of(TEST_SCOPE, TEST_STREAM), genPositions(10));
 
-        ClientFactory clientFactory = mockClientFactory();
-        String value = PravegaInputFormat.fetchPosition(clientFactory, TEST_SCOPE, TEST_STREAM);
+        StreamManager streamManager = mockStreamManager();
+        String value = PravegaInputFormat.fetchPosition(streamManager, TEST_SCOPE, TEST_STREAM);
 
         ByteBuffer buf = ByteBuffer.wrap(Base64.getDecoder().decode(value));
         Assert.assertEquals(sc, StreamCut.fromBytes(buf));
@@ -103,6 +105,16 @@ public class PravegaInputFormatTest {
         BatchClient mockBatchClient = mockBatchClient();
         Mockito.doReturn(mockBatchClient).when(mockClientFactory).createBatchClient();
         return mockClientFactory;
+    }
+
+    private StreamManager mockStreamManager() {
+        StreamManager streamManager = mock(StreamManager.class);
+        io.pravega.client.admin.StreamInfo streamInfo = mock(io.pravega.client.admin.StreamInfo.class);
+        Mockito.doReturn(streamInfo).when(streamManager).getStreamInfo(anyString(), anyString());
+        Stream s = new StreamImpl(TEST_SCOPE, TEST_STREAM);
+        StreamCut sc = new StreamCutImpl(s, genPositions(10));
+        Mockito.doReturn(sc).when(streamInfo).getTailStreamCut();
+        return streamManager;
     }
 
     private BatchClient mockBatchClient() {

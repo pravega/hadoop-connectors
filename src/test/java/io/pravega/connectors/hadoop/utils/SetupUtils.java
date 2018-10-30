@@ -85,11 +85,17 @@ public final class SetupUtils {
                 .isInProcSegmentStore(true)
                 .segmentStoreCount(1)
                 .containerCount(4)
+                .enableTls(false)
                 // to match code change https://github.com/pravega/pravega/pull/2476
                 .keyFile("")
                 .certFile("")
+                .enableAuth(false)
                 .userName("")
                 .passwd("")
+                .passwdFile("")
+                .jksKeyFile("")
+                .jksTrustFile("")
+                .keyPasswordFile("")
                 .build();
         this.inProcPravegaCluster.setControllerPorts(new int[]{controllerPort});
         this.inProcPravegaCluster.setSegmentStorePorts(new int[]{hostPort});
