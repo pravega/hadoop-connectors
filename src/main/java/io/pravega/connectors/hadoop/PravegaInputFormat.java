@@ -14,9 +14,10 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 
 import io.pravega.client.ClientFactory;
+import io.pravega.client.admin.StreamInfo;
+import io.pravega.client.admin.StreamManager;
 import io.pravega.client.batch.BatchClient;
 import io.pravega.client.batch.SegmentRange;
-import io.pravega.client.batch.StreamInfo;
 import io.pravega.client.stream.Stream;
 import io.pravega.client.stream.StreamCut;
 import org.apache.hadoop.conf.Configuration;
@@ -109,16 +110,15 @@ public class PravegaInputFormat<V> extends InputFormat<EventKey, V> {
         Preconditions.checkArgument(streamName != null && !streamName.isEmpty());
 
         String pos = "";
-        try (ClientFactory clientFactory = ClientFactory.withScope(scopeName, URI.create(uri))) {
-            pos = fetchPosition(clientFactory, scopeName, streamName);
+        try (StreamManager streamManager = StreamManager.create(URI.create(uri))) {
+            pos = fetchPosition(streamManager, scopeName, streamName);
         }
         return pos;
     }
 
     @VisibleForTesting
-    public static String fetchPosition(ClientFactory clientFactory, String scopeName, String streamName) throws IOException {
-        BatchClient batchClient = clientFactory.createBatchClient();
-        StreamInfo streamInfo = batchClient.getStreamInfo(Stream.of(scopeName, streamName)).join();
+    public static String fetchPosition(StreamManager streamManager, String scopeName, String streamName) throws IOException {
+        StreamInfo streamInfo = streamManager.getStreamInfo(scopeName, streamName);
         StreamCut endStreamCut = streamInfo.getTailStreamCut();
         return Base64.getEncoder().encodeToString(endStreamCut.toBytes().array());
     }
