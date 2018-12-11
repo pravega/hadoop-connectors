@@ -11,8 +11,8 @@
 package io.pravega.connectors.hadoop;
 
 import com.google.common.annotations.VisibleForTesting;
-import io.pravega.client.ClientFactory;
-import io.pravega.client.batch.BatchClient;
+import io.pravega.client.BatchClientFactory;
+import io.pravega.client.ClientConfig;
 import io.pravega.client.batch.SegmentIterator;
 import io.pravega.client.stream.Serializer;
 import org.apache.hadoop.conf.Configuration;
@@ -33,9 +33,8 @@ import javax.annotation.concurrent.NotThreadSafe;
 public class PravegaInputRecordReader<V> extends RecordReader<EventKey, V> {
 
     private static final Logger log = LoggerFactory.getLogger(PravegaInputRecordReader.class);
-    private ClientFactory clientFactory;
-    private ClientFactory externalClientFactory;
-    private BatchClient batchClient;
+    private BatchClientFactory clientFactory;
+    private BatchClientFactory externalClientFactory;
     private PravegaInputSplit split;
     private SegmentIterator<V> iterator;
     // Pravega Serializer to deserialize events saved in pravega
@@ -48,7 +47,7 @@ public class PravegaInputRecordReader<V> extends RecordReader<EventKey, V> {
     }
 
     @VisibleForTesting
-    protected PravegaInputRecordReader(ClientFactory externalClientFactory) {
+    protected PravegaInputRecordReader(BatchClientFactory externalClientFactory) {
         this.externalClientFactory = externalClientFactory;
     }
 
@@ -68,9 +67,9 @@ public class PravegaInputRecordReader<V> extends RecordReader<EventKey, V> {
     public void initialize(InputSplit split, Configuration conf) throws IOException, InterruptedException {
         this.split = (PravegaInputSplit) split;
 
-        clientFactory = (externalClientFactory != null) ? externalClientFactory : ClientFactory.withScope(conf.get(PravegaConfig.INPUT_SCOPE_NAME), URI.create(conf.get(PravegaConfig.INPUT_URI_STRING)));
+        ClientConfig clientConfig = ClientConfig.builder().controllerURI(URI.create(conf.get(PravegaConfig.INPUT_URI_STRING))).build();
+        clientFactory = (externalClientFactory != null) ? externalClientFactory : BatchClientFactory.withScope(conf.get(PravegaConfig.INPUT_SCOPE_NAME), clientConfig);
 
-        batchClient = clientFactory.createBatchClient();
         String deserializerClassName = conf.get(PravegaConfig.INPUT_DESERIALIZER);
         try {
             Class<?> deserializerClass = Class.forName(deserializerClassName);
@@ -79,7 +78,7 @@ public class PravegaInputRecordReader<V> extends RecordReader<EventKey, V> {
             log.error("Exception when creating deserializer: {}", e);
             throw new IOException("Unable to create the event deserializer (" + deserializerClassName + ")", e);
         }
-        iterator = batchClient.readSegment(this.split.getSegmentRange(), deserializer);
+        iterator = clientFactory.readSegment(this.split.getSegmentRange(), deserializer);
     }
 
     /**

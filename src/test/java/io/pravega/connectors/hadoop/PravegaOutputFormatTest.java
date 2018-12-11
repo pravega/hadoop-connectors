@@ -10,7 +10,7 @@
 
 package io.pravega.connectors.hadoop;
 
-import io.pravega.client.ClientFactory;
+import io.pravega.client.EventStreamClientFactory;
 import io.pravega.client.stream.EventStreamWriter;
 import io.pravega.client.stream.EventWriterConfig;
 import io.pravega.client.stream.Serializer;
@@ -128,7 +128,7 @@ public class PravegaOutputFormatTest {
     }
 
     private void mockClientFactory(PravegaOutputFormat<String> spyPravegaOutputFormat) {
-        ClientFactory mockClientFactory = mock(ClientFactory.class);
+        EventStreamClientFactory mockClientFactory = mock(EventStreamClientFactory.class);
         when(spyPravegaOutputFormat.getClientFactory(anyString(), anyObject())).thenReturn(mockClientFactory);
         when(mockClientFactory.createEventWriter(anyString(),
                 any(Serializer.class),

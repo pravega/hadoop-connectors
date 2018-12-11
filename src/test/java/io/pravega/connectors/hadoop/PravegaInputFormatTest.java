@@ -12,11 +12,9 @@ package io.pravega.connectors.hadoop;
 
 import io.pravega.client.admin.StreamManager;
 import io.pravega.client.batch.SegmentRange;
-import io.pravega.client.batch.StreamInfo;
 import io.pravega.client.batch.StreamSegmentsIterator;
 import io.pravega.client.batch.impl.SegmentRangeImpl;
-import io.pravega.client.batch.BatchClient;
-import io.pravega.client.ClientFactory;
+import io.pravega.client.BatchClientFactory;
 import io.pravega.client.segment.impl.Segment;
 import io.pravega.client.stream.Stream;
 import io.pravega.client.stream.StreamCut;
@@ -34,7 +32,6 @@ import org.mockito.Mockito;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Base64;
-import java.util.concurrent.CompletableFuture;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -100,10 +97,11 @@ public class PravegaInputFormatTest {
         return mockJob;
     }
 
-    private ClientFactory mockClientFactory() {
-        ClientFactory mockClientFactory = mock(ClientFactory.class);
-        BatchClient mockBatchClient = mockBatchClient();
-        Mockito.doReturn(mockBatchClient).when(mockClientFactory).createBatchClient();
+    private BatchClientFactory mockClientFactory() {
+        BatchClientFactory mockClientFactory = mock(BatchClientFactory.class);
+        StreamSegmentsIterator mockStreamSegmentsIterator = mockStreamSegmentsIterator();
+        Mockito.doReturn(mockStreamSegmentsIterator).when(mockClientFactory)
+                .getSegments(anyObject(), anyObject(), anyObject());
         return mockClientFactory;
     }
 
@@ -115,23 +113,6 @@ public class PravegaInputFormatTest {
         StreamCut sc = new StreamCutImpl(s, genPositions(10));
         Mockito.doReturn(sc).when(streamInfo).getTailStreamCut();
         return streamManager;
-    }
-
-    private BatchClient mockBatchClient() {
-        BatchClient mockBatchClient = mock(BatchClient.class);
-        StreamSegmentsIterator mockStreamSegmentsIterator = mockStreamSegmentsIterator();
-        Mockito.doReturn(mockStreamSegmentsIterator).when(mockBatchClient)
-            .getSegments(anyObject(), anyObject(), anyObject());
-
-        CompletableFuture<StreamInfo> future = mock(CompletableFuture.class);
-        Mockito.doReturn(future).when(mockBatchClient).getStreamInfo(anyObject());
-
-        Stream s = new StreamImpl(TEST_SCOPE, TEST_STREAM);
-        StreamCutImpl sc = new StreamCutImpl(s, genPositions(10));
-        StreamInfo si = new StreamInfo(TEST_SCOPE, TEST_STREAM, sc, null);
-        Mockito.doReturn(si).when(future).join();
-
-        return mockBatchClient;
     }
 
     private StreamSegmentsIterator mockStreamSegmentsIterator() {

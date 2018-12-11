@@ -12,8 +12,7 @@ package io.pravega.connectors.hadoop;
 
 import io.pravega.client.batch.SegmentRange;
 import io.pravega.client.batch.impl.SegmentRangeImpl;
-import io.pravega.client.ClientFactory;
-import io.pravega.client.batch.BatchClient;
+import io.pravega.client.BatchClientFactory;
 import io.pravega.client.batch.SegmentIterator;
 import io.pravega.client.batch.impl.SegmentIteratorImpl;
 import io.pravega.client.segment.impl.Segment;
@@ -41,9 +40,8 @@ public class PravegaInputRecordReaderTest {
     private PravegaInputRecordReader<Integer> reader;
     private Segment segment;
     private PravegaInputSplit split;
-    private ClientFactory mockClientFactory;
+    private BatchClientFactory mockClientFactory;
     private SegmentIterator<Integer> mockIterator;
-    private BatchClient mockBatchClient;
 
     @Before
     public void setupTests() throws Exception {
@@ -56,7 +54,7 @@ public class PravegaInputRecordReaderTest {
         TaskAttemptContext ctx = mockTaskAttemptContextImpl();
         reader.initialize(split, ctx);
         verify(ctx).getConfiguration();
-        verify(mockBatchClient).readSegment(anyObject(), anyObject());
+        verify(mockClientFactory).readSegment(anyObject(), anyObject());
     }
 
     @Test
@@ -92,18 +90,11 @@ public class PravegaInputRecordReaderTest {
         return mockTaskAttemptContextImpl;
     }
 
-    private ClientFactory mockClientFactory() {
-        ClientFactory mockClientFactory = mock(ClientFactory.class);
-        mockBatchClient = mockBatchClient();
-        Mockito.doReturn(mockBatchClient).when(mockClientFactory).createBatchClient();
-        return mockClientFactory;
-    }
-
-    private BatchClient mockBatchClient() {
-        BatchClient mockBatchClient = mock(BatchClient.class);
+    private BatchClientFactory mockClientFactory() {
+        BatchClientFactory mockClientFactory = mock(BatchClientFactory.class);
         mockIterator = mockIterator();
-        Mockito.doReturn(mockIterator).when(mockBatchClient).readSegment(anyObject(), anyObject());
-        return mockBatchClient;
+        Mockito.doReturn(mockIterator).when(mockClientFactory).readSegment(anyObject(), anyObject());
+        return mockClientFactory;
     }
 
     private SegmentIterator<Integer> mockIterator() {
