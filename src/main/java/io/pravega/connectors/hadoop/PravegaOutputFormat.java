@@ -11,7 +11,8 @@
 package io.pravega.connectors.hadoop;
 
 import com.google.common.annotations.VisibleForTesting;
-import io.pravega.client.ClientFactory;
+import io.pravega.client.EventStreamClientFactory;
+import io.pravega.client.ClientConfig;
 import io.pravega.client.stream.EventStreamWriter;
 import io.pravega.client.stream.EventWriterConfig;
 import io.pravega.client.stream.Serializer;
@@ -79,7 +80,7 @@ public class PravegaOutputFormat<V> extends OutputFormat<NullWritable, V> {
                                                   String streamName,
                                                   URI controllerURI,
                                                   String serializerClassName) throws IOException {
-        ClientFactory clientFactory = getClientFactory(scopeName, controllerURI);
+        EventStreamClientFactory clientFactory = getClientFactory(scopeName, controllerURI);
         Object serializerInstance = getInstanceFromName(serializerClassName);
         if (!Serializer.class.isAssignableFrom(serializerInstance.getClass())) {
             throw new IOException(serializerInstance.getClass() + " is not a type of Serializer");
@@ -90,8 +91,9 @@ public class PravegaOutputFormat<V> extends OutputFormat<NullWritable, V> {
     }
 
     @VisibleForTesting
-    protected ClientFactory getClientFactory(String scope, URI controllerUri) {
-        return ClientFactory.withScope(scope, controllerUri);
+    protected EventStreamClientFactory getClientFactory(String scope, URI controllerUri) {
+        ClientConfig clientConfig = ClientConfig.builder().controllerURI(controllerUri).build();
+        return EventStreamClientFactory.withScope(scope, clientConfig);
     }
 
     private PravegaOutputRecordWriter<V> getOutputRecordWriter(Configuration conf) throws IOException {

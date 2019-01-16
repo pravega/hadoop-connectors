@@ -13,10 +13,10 @@ package io.pravega.connectors.hadoop;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 
-import io.pravega.client.ClientFactory;
+import io.pravega.client.BatchClientFactory;
+import io.pravega.client.ClientConfig;
 import io.pravega.client.admin.StreamInfo;
 import io.pravega.client.admin.StreamManager;
-import io.pravega.client.batch.BatchClient;
 import io.pravega.client.batch.SegmentRange;
 import io.pravega.client.stream.Stream;
 import io.pravega.client.stream.StreamCut;
@@ -42,13 +42,13 @@ import java.util.Optional;
 public class PravegaInputFormat<V> extends InputFormat<EventKey, V> {
 
     // client factory
-    private ClientFactory externalClientFactory;
+    private BatchClientFactory externalClientFactory;
 
     public PravegaInputFormat() {
     }
 
     @VisibleForTesting
-    protected PravegaInputFormat(ClientFactory externalClientFactory) {
+    protected PravegaInputFormat(BatchClientFactory externalClientFactory) {
         this.externalClientFactory = externalClientFactory;
     }
 
@@ -81,12 +81,12 @@ public class PravegaInputFormat<V> extends InputFormat<EventKey, V> {
         final StreamCut endStreamCut = getStreamCutFromString(
                 Optional.ofNullable(conf.get(PravegaConfig.INPUT_END_POSITION)).orElse(""));
 
-        ClientFactory clientFactory = (externalClientFactory != null) ? externalClientFactory : ClientFactory.withScope(scopeName, controllerURI);
+        ClientConfig clientConfig = ClientConfig.builder().controllerURI(controllerURI).build();
+        BatchClientFactory clientFactory = (externalClientFactory != null) ? externalClientFactory : BatchClientFactory.withScope(scopeName, clientConfig);
 
         // generate a split per segment
         List<InputSplit> splits = new ArrayList<InputSplit>();
-        BatchClient batchClient = clientFactory.createBatchClient();
-        Iterator<SegmentRange> iter = batchClient.getSegments(Stream.of(scopeName, streamName), startStreamCut, endStreamCut).getIterator();
+        Iterator<SegmentRange> iter = clientFactory.getSegments(Stream.of(scopeName, streamName), startStreamCut, endStreamCut).getIterator();
         while (iter.hasNext()) {
             SegmentRange sr = iter.next();
             PravegaInputSplit split = new PravegaInputSplit(sr);
