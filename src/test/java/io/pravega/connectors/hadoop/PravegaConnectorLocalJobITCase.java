@@ -38,7 +38,7 @@ import java.util.Map;
 import java.util.Set;
 
 
-public class PravegaConnectorLocalJobITCase {
+public class PravegaConnectorLocalJobITCase extends ConnectorBaseITCase {
 
     private static final String TEST_SCOPE = "PravegaConnectorLocalJobITCase";
     private static final String TEST_STREAM = "stream";
@@ -109,7 +109,7 @@ public class PravegaConnectorLocalJobITCase {
         }
 
         String endPos1 = PravegaInputFormat.fetchLatestPosition(
-                SETUP_UTILS.getControllerUri(), TEST_SCOPE, TEST_STREAM);
+                SETUP_UTILS.getClientConfig(), TEST_SCOPE, TEST_STREAM);
 
         // won't be read because it's written after end poisitions are fetched
         writer.writeEvent("onemore");
@@ -141,7 +141,7 @@ public class PravegaConnectorLocalJobITCase {
         }
 
         String endPos2 = PravegaInputFormat.fetchLatestPosition(
-                SETUP_UTILS.getControllerUri(), TEST_SCOPE, TEST_STREAM);
+                SETUP_UTILS.getClientConfig(), TEST_SCOPE, TEST_STREAM);
 
         // won't be read because it's written after end poisitions are fetched
         writer.writeEvent("twomore");
@@ -187,12 +187,13 @@ public class PravegaConnectorLocalJobITCase {
         conf = PravegaInputFormat.builder(conf)
             .withScope(TEST_SCOPE)
             .forStream(TEST_STREAM)
-            .withURI(SETUP_UTILS.getControllerUri())
+            .withURI(SETUP_UTILS.getControllerUri().toString())
             .withDeserializer(JavaSerializer.class.getName())
             .startPosition(startPos)
             .endPosition(endPos)
             .build();
 
+        addSecurityConfiguration(conf, SETUP_UTILS);
         Job job = Job.getInstance(conf, "WordCount");
 
         job.setJarByClass(PravegaConnectorLocalJobITCase.class);
@@ -225,11 +226,16 @@ public class PravegaConnectorLocalJobITCase {
     @Test
     public void testPravegaConnectorOutput() throws Exception {
 
-        // TEST 0: without start or end
+        String startPos = PravegaInputFormat.fetchLatestPosition(
+                SETUP_UTILS.getClientConfig(), TEST_SCOPE, TEST_STREAM);
+
         writer.writeEvent("string1");
         writer.writeEvent("string2 string3");
         writer.writeEvent("string4");
         writer.flush();
+
+        String endPos = PravegaInputFormat.fetchLatestPosition(
+                SETUP_UTILS.getClientConfig(), TEST_SCOPE, TEST_STREAM);
 
         // setup local job runner
         outputPath = new Path("src/test/java/io/pravega/connectors/hadoop/localjobrunnertestdir1");
@@ -242,7 +248,7 @@ public class PravegaConnectorLocalJobITCase {
             fs.delete(outputPath, true);
         }
 
-        job = configureJobWithInputAndOutput(conf, outputPath);
+        job = configureJobWithInputAndOutput(conf, outputPath, startPos, endPos);
         boolean status = job.waitForCompletion(true);
         Assert.assertTrue(job.isSuccessful());
 
@@ -259,22 +265,25 @@ public class PravegaConnectorLocalJobITCase {
         }
     }
 
-    private Job configureJobWithInputAndOutput(Configuration conf, Path outputPath) throws Exception {
+    private Job configureJobWithInputAndOutput(Configuration conf, Path outputPath, String startPos, String endPos) throws Exception {
         conf = PravegaInputFormat.builder(conf)
             .withScope(TEST_SCOPE)
             .forStream(TEST_STREAM)
-            .withURI(SETUP_UTILS.getControllerUri())
+            .withURI(SETUP_UTILS.getControllerUri().toString())
             .withDeserializer(JavaSerializer.class.getName())
+            .startPosition(startPos)
+            .endPosition(endPos)
             .build();
 
         conf = PravegaOutputFormat.builder(conf)
             .withScope(TEST_SCOPE)
             .forStream(TEST_STREAM_OUT)
-            .withURI(SETUP_UTILS.getControllerUri())
+            .withURI(SETUP_UTILS.getControllerUri().toString())
             .withSerializer(JavaSerializer.class.getName())
             .withEventRouter(EventRouter.class.getName())
             .build();
 
+        addSecurityConfiguration(conf, SETUP_UTILS);
         Job job = Job.getInstance(conf, "InAndOut");
 
         job.setJarByClass(PravegaConnectorLocalJobITCase.class);

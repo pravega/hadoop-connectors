@@ -10,7 +10,6 @@
 
 package io.pravega.connectors.hadoop;
 
-import io.pravega.client.ClientConfig;
 import io.pravega.client.stream.EventStreamWriter;
 import io.pravega.client.stream.Stream;
 import io.pravega.client.stream.impl.ControllerImpl;
@@ -28,7 +27,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -42,7 +40,7 @@ import static io.pravega.shared.segment.StreamSegmentNameUtils.computeSegmentId;
 import static io.pravega.shared.segment.StreamSegmentNameUtils.getSegmentNumber;
 
 
-public class PravegaInputFormatITCase {
+public class PravegaInputFormatITCase extends ConnectorBaseITCase {
 
     private static final String TEST_SCOPE = "PravegaInputFormatITCase";
     private static final String TEST_STREAM = "stream";
@@ -61,9 +59,7 @@ public class PravegaInputFormatITCase {
 
         executor = Executors.newSingleThreadScheduledExecutor();
         controller = new ControllerImpl(ControllerImplConfig.builder()
-            .clientConfig(
-                ClientConfig.builder()
-                    .controllerURI(URI.create("tcp://localhost:" + SETUP_UTILS.getControllerPort())).build())
+            .clientConfig(SETUP_UTILS.getClientConfig())
             .retryAttempts(1).build(),
             executor);
     }
@@ -80,10 +76,11 @@ public class PravegaInputFormatITCase {
         conf = PravegaInputFormat.builder(conf)
             .withScope(TEST_SCOPE)
             .forStream(TEST_STREAM)
-            .withURI(SETUP_UTILS.getControllerUri())
+            .withURI(SETUP_UTILS.getControllerUri().toString())
             .withDeserializer(IntegerSerializer.class.getName())
             .build();
 
+        addSecurityConfiguration(conf, SETUP_UTILS);
         Job job = new Job(conf);
 
         writeEvents(20, 0);

@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.Optional;
 import javax.annotation.concurrent.NotThreadSafe;
 
 /**
@@ -61,13 +62,25 @@ public class PravegaInputRecordReader<V> extends RecordReader<EventKey, V> {
      */
     @Override
     public void initialize(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
-        initialize(split, context.getConfiguration());
-    }
-
-    public void initialize(InputSplit split, Configuration conf) throws IOException, InterruptedException {
         this.split = (PravegaInputSplit) split;
+        Configuration conf = context.getConfiguration();
 
-        ClientConfig clientConfig = ClientConfig.builder().controllerURI(URI.create(conf.get(PravegaConfig.INPUT_URI_STRING))).build();
+        final URI controllerURI = Optional.ofNullable(conf.get(PravegaConfig.INPUT_URI_STRING)).map(URI::create).orElseThrow(() ->
+                new IOException("The Pravega controller URI must be configured (" + PravegaConfig.INPUT_URI_STRING + ")"));
+
+        PravegaClientConfig pravegaClientConfig = PravegaClientConfig.fromDefaults();
+        pravegaClientConfig.withControllerURI(controllerURI);
+
+        boolean validateHostName = conf.getBoolean(PravegaConfig.VALIDATE_HOST_NAME, false);
+        pravegaClientConfig.withHostnameValidation(validateHostName);
+
+        String base64EncodedTrustStoreContent = conf.get(PravegaConfig.BASE64_TRUSTSTORE_FILE);
+        if (base64EncodedTrustStoreContent != null && base64EncodedTrustStoreContent.length() != 0) {
+            String trustStoreFile = Helper.decodeTrustStoreDataToTempFile(base64EncodedTrustStoreContent);
+            pravegaClientConfig.withTrustStore(trustStoreFile);
+        }
+        ClientConfig clientConfig = pravegaClientConfig.getClientConfig();
+
         clientFactory = (externalClientFactory != null) ? externalClientFactory : BatchClientFactory.withScope(conf.get(PravegaConfig.INPUT_SCOPE_NAME), clientConfig);
 
         String deserializerClassName = conf.get(PravegaConfig.INPUT_DESERIALIZER);

@@ -66,6 +66,11 @@ repositories {
 configurations {
     shadowOnly {
     }
+    all {
+        resolutionStrategy {
+            force "io.netty:netty-tcnative-boringssl-static:" + nettyBoringSSLVersion
+        }
+    }
 }
 
 dependencies {
@@ -80,6 +85,7 @@ dependencies {
     }
     testCompile group: 'org.mockito', name: 'mockito-all', version: mockitoVersion
     testCompile group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion
+    testCompile group: 'com.github.stefanbirkner', name: 'system-rules', version: junitSystemRulesVersion
 
     compileOnly group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion
     compileOnly group: 'org.apache.hadoop', name: 'hadoop-mapreduce-client-core', version: hadoopVersion
@@ -90,6 +96,7 @@ dependencies {
 }
 
 test {
+    systemProperties = System.properties
     dependsOn 'cleanTest'
 }
 
