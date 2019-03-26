@@ -66,11 +66,6 @@ repositories {
 configurations {
     shadowOnly {
     }
-    all {
-        resolutionStrategy {
-            force "io.netty:netty-tcnative-boringssl-static:" + nettyBoringSSLVersion
-        }
-    }
 }
 
 dependencies {
