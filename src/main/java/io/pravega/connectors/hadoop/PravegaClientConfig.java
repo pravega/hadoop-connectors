@@ -12,7 +12,6 @@ package io.pravega.connectors.hadoop;
 import com.google.common.base.Preconditions;
 import io.pravega.client.ClientConfig;
 import io.pravega.client.stream.impl.Credentials;
-import lombok.Data;
 
 import javax.annotation.Nullable;
 import java.net.URI;
@@ -20,9 +19,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
+import lombok.Data;
 
 /**
- * Helper class to assist building Pravega client configurations.
+ * SecurityHelper class to assist building Pravega client configurations.
  */
 public class PravegaClientConfig {
 
@@ -38,7 +38,7 @@ public class PravegaClientConfig {
     private String trustStore;
 
     PravegaClientConfig(Properties properties, Map<String, String> env, Map<String, String> params) {
-        Preconditions.checkNotNull(properties, "Properties cannot be null");
+        Preconditions.checkNotNull(properties, "properties cannot be null");
         Preconditions.checkNotNull(env, "env cannot be null");
         Preconditions.checkNotNull(params, "params cannot be null");
         this.controllerURI = CONTROLLER_PARAM.resolve(params, properties, env).map(URI::create).orElse(null);
@@ -105,9 +105,7 @@ public class PravegaClientConfig {
      * @param scope The scope to use (with lowest priority).
      */
     public PravegaClientConfig withDefaultScope(String scope) {
-        if (this.defaultScope == null) {
-            this.defaultScope = scope;
-        }
+        this.defaultScope = scope;
         return this;
     }
 

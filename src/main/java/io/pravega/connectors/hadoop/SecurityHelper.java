@@ -17,7 +17,7 @@ import java.io.IOException;
 import java.util.Base64;
 import java.util.UUID;
 
-public class Helper {
+public class SecurityHelper {
 
     private static final String TEMP_DIR = System.getProperty("java.io.tmpdir");
 

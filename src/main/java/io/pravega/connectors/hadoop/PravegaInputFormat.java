@@ -87,7 +87,7 @@ public class PravegaInputFormat<V> extends InputFormat<EventKey, V> {
 
         String base64EncodedTrustStoreContent = conf.get(PravegaConfig.BASE64_TRUSTSTORE_FILE);
         if (base64EncodedTrustStoreContent != null && base64EncodedTrustStoreContent.length() != 0) {
-            String trustStoreFile = Helper.decodeTrustStoreDataToTempFile(base64EncodedTrustStoreContent);
+            String trustStoreFile = SecurityHelper.decodeTrustStoreDataToTempFile(base64EncodedTrustStoreContent);
             pravegaClientConfig.withTrustStore(trustStoreFile);
         }
 
