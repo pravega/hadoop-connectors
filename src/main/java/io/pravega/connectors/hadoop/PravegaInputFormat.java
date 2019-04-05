@@ -67,31 +67,19 @@ public class PravegaInputFormat<V> extends InputFormat<EventKey, V> {
         // check parameters
         Configuration conf = context.getConfiguration();
 
+        final URI controllerURI = Optional.ofNullable(conf.get(PravegaConfig.INPUT_URI_STRING)).map(URI::create).orElseThrow(() ->
+                new IOException("The Pravega controller URI must be configured (" + PravegaConfig.INPUT_URI_STRING + ")"));
         final String scopeName = Optional.ofNullable(conf.get(PravegaConfig.INPUT_SCOPE_NAME)).orElseThrow(() ->
                 new IOException("The input scope name must be configured (" + PravegaConfig.INPUT_SCOPE_NAME + ")"));
         final String streamName = Optional.ofNullable(conf.get(PravegaConfig.INPUT_STREAM_NAME)).orElseThrow(() ->
                 new IOException("The input stream name must be configured (" + PravegaConfig.INPUT_STREAM_NAME + ")"));
-        final URI controllerURI = Optional.ofNullable(conf.get(PravegaConfig.INPUT_URI_STRING)).map(URI::create).orElseThrow(() ->
-                new IOException("The Pravega controller URI must be configured (" + PravegaConfig.INPUT_URI_STRING + ")"));
-
         final StreamCut startStreamCut = getStreamCutFromString(
                 Optional.ofNullable(conf.get(PravegaConfig.INPUT_START_POSITION)).orElse(""));
         final StreamCut endStreamCut = getStreamCutFromString(
                 Optional.ofNullable(conf.get(PravegaConfig.INPUT_END_POSITION)).orElse(""));
 
-        PravegaClientConfig pravegaClientConfig = PravegaClientConfig.fromDefaults();
-        pravegaClientConfig.withControllerURI(controllerURI);
+        ClientConfig clientConfig = SecurityHelper.prepareClientConfig(conf, controllerURI);
 
-        boolean validateHostName = conf.getBoolean(PravegaConfig.VALIDATE_HOST_NAME, false);
-        pravegaClientConfig.withHostnameValidation(validateHostName);
-
-        String base64EncodedTrustStoreContent = conf.get(PravegaConfig.BASE64_TRUSTSTORE_FILE);
-        if (base64EncodedTrustStoreContent != null && base64EncodedTrustStoreContent.length() != 0) {
-            String trustStoreFile = SecurityHelper.decodeTrustStoreDataToTempFile(base64EncodedTrustStoreContent);
-            pravegaClientConfig.withTrustStore(trustStoreFile);
-        }
-
-        ClientConfig clientConfig = pravegaClientConfig.getClientConfig();
         BatchClientFactory clientFactory = (externalClientFactory != null) ? externalClientFactory : BatchClientFactory.withScope(scopeName, clientConfig);
 
         // generate a split per segment

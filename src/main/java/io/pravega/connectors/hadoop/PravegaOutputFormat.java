@@ -92,9 +92,6 @@ public class PravegaOutputFormat<V> extends OutputFormat<NullWritable, V> {
 
     @VisibleForTesting
     protected EventStreamClientFactory getClientFactory(String scope, ClientConfig clientConfig) {
-        if (clientConfig == null) {
-            clientConfig = ClientConfig.builder().build();
-        }
         return EventStreamClientFactory.withScope(scope, clientConfig);
     }
 
@@ -127,19 +124,7 @@ public class PravegaOutputFormat<V> extends OutputFormat<NullWritable, V> {
             throw new IOException(router.getClass() + " is not a type of PravegaEventRouter");
         }
 
-        PravegaClientConfig pravegaClientConfig = PravegaClientConfig.fromDefaults();
-        pravegaClientConfig.withControllerURI(controllerURI);
-
-        boolean validateHostName = conf.getBoolean(PravegaConfig.VALIDATE_HOST_NAME, false);
-        pravegaClientConfig.withHostnameValidation(validateHostName);
-
-        String base64EncodedTrustStoreContent = conf.get(PravegaConfig.BASE64_TRUSTSTORE_FILE);
-        if (base64EncodedTrustStoreContent != null && base64EncodedTrustStoreContent.length() != 0) {
-            String trustStoreFile = SecurityHelper.decodeTrustStoreDataToTempFile(base64EncodedTrustStoreContent);
-            pravegaClientConfig.withTrustStore(trustStoreFile);
-        }
-
-        ClientConfig clientConfig = pravegaClientConfig.getClientConfig();
+        ClientConfig clientConfig = SecurityHelper.prepareClientConfig(conf, controllerURI);
 
         @SuppressWarnings("unchecked")
         PravegaEventRouter<V> pravegaEventRouter = (PravegaEventRouter<V>) router;

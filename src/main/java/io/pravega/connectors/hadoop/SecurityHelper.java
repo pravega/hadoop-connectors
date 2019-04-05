@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 Dell Inc., or its subsidiaries. All Rights Reserved.
+ * Copyright (c) 2019 Dell Inc., or its subsidiaries. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -10,10 +10,13 @@
 package io.pravega.connectors.hadoop;
 
 import com.google.common.base.Preconditions;
+import io.pravega.client.ClientConfig;
+import org.apache.hadoop.conf.Configuration;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URI;
 import java.util.Base64;
 import java.util.UUID;
 
@@ -31,5 +34,19 @@ public class SecurityHelper {
             outputStream.write(decodedTrustStoreContent);
         }
         return path.toString();
+    }
+
+    public static ClientConfig prepareClientConfig(Configuration conf, URI controllerURI) throws IOException {
+        PravegaClientConfig pravegaClientConfig = PravegaClientConfig.fromDefaults();
+        pravegaClientConfig.withControllerURI(controllerURI);
+
+        boolean validateHostName = conf.getBoolean(PravegaConfig.VALIDATE_HOST_NAME, false);
+        pravegaClientConfig.withHostnameValidation(validateHostName);
+
+        String base64EncodedTrustStoreContent = conf.get(PravegaConfig.BASE64_TRUSTSTORE_FILE);
+        if (base64EncodedTrustStoreContent != null && base64EncodedTrustStoreContent.length() != 0) {
+            pravegaClientConfig.withTrustStore(decodeTrustStoreDataToTempFile(base64EncodedTrustStoreContent));
+        }
+        return pravegaClientConfig.getClientConfig();
     }
 }

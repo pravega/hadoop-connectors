@@ -61,25 +61,14 @@ public class PravegaInputRecordReader<V> extends RecordReader<EventKey, V> {
      * @param context TaskAttemptContext
      */
     @Override
-    public void initialize(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
+    public void initialize(InputSplit split, TaskAttemptContext context) throws IOException {
         this.split = (PravegaInputSplit) split;
         Configuration conf = context.getConfiguration();
 
         final URI controllerURI = Optional.ofNullable(conf.get(PravegaConfig.INPUT_URI_STRING)).map(URI::create).orElseThrow(() ->
                 new IOException("The Pravega controller URI must be configured (" + PravegaConfig.INPUT_URI_STRING + ")"));
 
-        PravegaClientConfig pravegaClientConfig = PravegaClientConfig.fromDefaults();
-        pravegaClientConfig.withControllerURI(controllerURI);
-
-        boolean validateHostName = conf.getBoolean(PravegaConfig.VALIDATE_HOST_NAME, false);
-        pravegaClientConfig.withHostnameValidation(validateHostName);
-
-        String base64EncodedTrustStoreContent = conf.get(PravegaConfig.BASE64_TRUSTSTORE_FILE);
-        if (base64EncodedTrustStoreContent != null && base64EncodedTrustStoreContent.length() != 0) {
-            String trustStoreFile = SecurityHelper.decodeTrustStoreDataToTempFile(base64EncodedTrustStoreContent);
-            pravegaClientConfig.withTrustStore(trustStoreFile);
-        }
-        ClientConfig clientConfig = pravegaClientConfig.getClientConfig();
+        ClientConfig clientConfig = SecurityHelper.prepareClientConfig(conf, controllerURI);
 
         clientFactory = (externalClientFactory != null) ? externalClientFactory : BatchClientFactory.withScope(conf.get(PravegaConfig.INPUT_SCOPE_NAME), clientConfig);
 

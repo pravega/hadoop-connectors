@@ -86,7 +86,7 @@ public class PravegaConnectorLocalJobITCase extends ConnectorBaseITCase {
             fs.delete(outputPath, true);
         }
 
-        job = configureJob(conf, outputPath);
+        job = prepareJobWithInputConfig(conf, outputPath, "", "");
         boolean status = job.waitForCompletion(true);
         Assert.assertTrue(job.isSuccessful());
 
@@ -115,7 +115,7 @@ public class PravegaConnectorLocalJobITCase extends ConnectorBaseITCase {
         writer.writeEvent("onemore");
         writer.flush();
 
-        job = configureJob(conf, outputPath, "", endPos1);
+        job = prepareJobWithInputConfig(conf, outputPath, "", endPos1);
         status = job.waitForCompletion(true);
         Assert.assertTrue(job.isSuccessful());
 
@@ -147,7 +147,7 @@ public class PravegaConnectorLocalJobITCase extends ConnectorBaseITCase {
         writer.writeEvent("twomore");
         writer.flush();
 
-        job = configureJob(conf, outputPath, endPos1, endPos2);
+        job = prepareJobWithInputConfig(conf, outputPath, endPos1, endPos2);
         status = job.waitForCompletion(true);
         Assert.assertTrue(job.isSuccessful());
 
@@ -167,7 +167,7 @@ public class PravegaConnectorLocalJobITCase extends ConnectorBaseITCase {
             fs.delete(outputPath, true);
         }
 
-        job = configureJob(conf, outputPath, endPos2, "");
+        job = prepareJobWithInputConfig(conf, outputPath, endPos2, "");
         status = job.waitForCompletion(true);
         Assert.assertTrue(job.isSuccessful());
 
@@ -179,23 +179,11 @@ public class PravegaConnectorLocalJobITCase extends ConnectorBaseITCase {
         Assert.assertEquals(new Integer(1), counts.get("startonly"));
     }
 
-    private Job configureJob(Configuration conf, Path outputPath) throws Exception {
-        return configureJob(conf, outputPath, "", "");
-    }
+    private Job prepareJobWithInputConfig(Configuration conf, Path outputPath, String startPos, String endPos) throws Exception {
+        Configuration inputConf = prepareInputFormatConfiguration(conf, startPos, endPos);
+        addSecurityConfiguration(inputConf, SETUP_UTILS);
 
-    private Job configureJob(Configuration conf, Path outputPath, String startPos, String endPos) throws Exception {
-        conf = PravegaInputFormat.builder(conf)
-            .withScope(TEST_SCOPE)
-            .forStream(TEST_STREAM)
-            .withURI(SETUP_UTILS.getControllerUri().toString())
-            .withDeserializer(JavaSerializer.class.getName())
-            .startPosition(startPos)
-            .endPosition(endPos)
-            .build();
-
-        addSecurityConfiguration(conf, SETUP_UTILS);
-        Job job = Job.getInstance(conf, "WordCount");
-
+        Job job = Job.getInstance(inputConf, "WordCount");
         job.setJarByClass(PravegaConnectorLocalJobITCase.class);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(IntWritable.class);
@@ -226,16 +214,10 @@ public class PravegaConnectorLocalJobITCase extends ConnectorBaseITCase {
     @Test
     public void testPravegaConnectorOutput() throws Exception {
 
-        String startPos = PravegaInputFormat.fetchLatestPosition(
-                SETUP_UTILS.getClientConfig(), TEST_SCOPE, TEST_STREAM);
-
         writer.writeEvent("string1");
         writer.writeEvent("string2 string3");
         writer.writeEvent("string4");
         writer.flush();
-
-        String endPos = PravegaInputFormat.fetchLatestPosition(
-                SETUP_UTILS.getClientConfig(), TEST_SCOPE, TEST_STREAM);
 
         // setup local job runner
         outputPath = new Path("src/test/java/io/pravega/connectors/hadoop/localjobrunnertestdir1");
@@ -248,8 +230,8 @@ public class PravegaConnectorLocalJobITCase extends ConnectorBaseITCase {
             fs.delete(outputPath, true);
         }
 
-        job = configureJobWithInputAndOutput(conf, outputPath, startPos, endPos);
-        boolean status = job.waitForCompletion(true);
+        job = prepareJobWithInputAndOutputConfig(conf, outputPath, "", "");
+        job.waitForCompletion(true);
         Assert.assertTrue(job.isSuccessful());
 
         EventStreamReader<String> reader = SETUP_UTILS.getStringReader(TEST_STREAM_OUT);
@@ -265,26 +247,15 @@ public class PravegaConnectorLocalJobITCase extends ConnectorBaseITCase {
         }
     }
 
-    private Job configureJobWithInputAndOutput(Configuration conf, Path outputPath, String startPos, String endPos) throws Exception {
-        conf = PravegaInputFormat.builder(conf)
-            .withScope(TEST_SCOPE)
-            .forStream(TEST_STREAM)
-            .withURI(SETUP_UTILS.getControllerUri().toString())
-            .withDeserializer(JavaSerializer.class.getName())
-            .startPosition(startPos)
-            .endPosition(endPos)
-            .build();
+    private Job prepareJobWithInputAndOutputConfig(Configuration conf, Path outputPath,
+                                                                String startPos,
+                                                                String endPos) throws Exception {
 
-        conf = PravegaOutputFormat.builder(conf)
-            .withScope(TEST_SCOPE)
-            .forStream(TEST_STREAM_OUT)
-            .withURI(SETUP_UTILS.getControllerUri().toString())
-            .withSerializer(JavaSerializer.class.getName())
-            .withEventRouter(EventRouter.class.getName())
-            .build();
+        Configuration inputConf = prepareInputFormatConfiguration(conf, startPos, endPos);
+        Configuration outputConf = prepareOutputFormatConfiguration(inputConf);
+        addSecurityConfiguration(outputConf, SETUP_UTILS);
 
-        addSecurityConfiguration(conf, SETUP_UTILS);
-        Job job = Job.getInstance(conf, "InAndOut");
+        Job job = Job.getInstance(outputConf, "InAndOut");
 
         job.setJarByClass(PravegaConnectorLocalJobITCase.class);
 
@@ -299,6 +270,27 @@ public class PravegaConnectorLocalJobITCase extends ConnectorBaseITCase {
 
         FileOutputFormat.setOutputPath(job, outputPath);
         return job;
+    }
+
+    private Configuration prepareInputFormatConfiguration(Configuration conf, String startPos, String endPos) {
+        return PravegaInputFormat.builder(conf)
+                .withScope(TEST_SCOPE)
+                .forStream(TEST_STREAM)
+                .withURI(SETUP_UTILS.getControllerUri().toString())
+                .withDeserializer(JavaSerializer.class.getName())
+                .startPosition(startPos)
+                .endPosition(endPos)
+                .build();
+    }
+
+    private Configuration prepareOutputFormatConfiguration(Configuration conf) {
+        return PravegaOutputFormat.builder(conf)
+                .withScope(TEST_SCOPE)
+                .forStream(TEST_STREAM_OUT)
+                .withURI(SETUP_UTILS.getControllerUri().toString())
+                .withSerializer(JavaSerializer.class.getName())
+                .withEventRouter(EventRouter.class.getName())
+                .build();
     }
 
     /**

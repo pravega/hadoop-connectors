@@ -17,15 +17,6 @@ import io.pravega.client.stream.impl.ControllerImplConfig;
 import io.pravega.client.stream.impl.StreamImpl;
 import io.pravega.connectors.hadoop.utils.IntegerSerializer;
 import io.pravega.connectors.hadoop.utils.SetupUtils;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapreduce.InputFormat;
-import org.apache.hadoop.mapreduce.InputSplit;
-import org.apache.hadoop.mapreduce.Job;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -35,10 +26,17 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapreduce.InputFormat;
+import org.apache.hadoop.mapreduce.InputSplit;
+import org.apache.hadoop.mapreduce.Job;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import static io.pravega.shared.segment.StreamSegmentNameUtils.computeSegmentId;
 import static io.pravega.shared.segment.StreamSegmentNameUtils.getSegmentNumber;
-
 
 public class PravegaInputFormatITCase extends ConnectorBaseITCase {
 
