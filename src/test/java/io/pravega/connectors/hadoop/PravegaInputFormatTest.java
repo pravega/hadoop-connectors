@@ -52,7 +52,7 @@ public class PravegaInputFormatTest {
         JobContext ctx = getJobContext();
         Configuration c = ctx.getConfiguration();
         Assert.assertNotNull(c);
-        PravegaInputFormat<Integer> inputFormat = new PravegaInputFormat(mockClientFactory());
+        PravegaInputFormat<Integer> inputFormat = new PravegaInputFormat<>(mockClientFactory());
         List<InputSplit> splits = inputFormat.getSplits(ctx);
         Assert.assertEquals(splits.size(), 3);
         int i = 0;
@@ -69,7 +69,7 @@ public class PravegaInputFormatTest {
 
     @Test
     public void testCreateRecordReader() throws IOException, InterruptedException {
-        PravegaInputFormat<Integer> inputFormat = new PravegaInputFormat();
+        PravegaInputFormat<Integer> inputFormat = new PravegaInputFormat<>();
         RecordReader<?, ?> reader = inputFormat.createRecordReader(null, null);
         Assert.assertTrue(reader instanceof PravegaInputRecordReader);
     }

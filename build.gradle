@@ -90,6 +90,7 @@ dependencies {
 }
 
 test {
+    systemProperties = System.properties
     dependsOn 'cleanTest'
 }
 

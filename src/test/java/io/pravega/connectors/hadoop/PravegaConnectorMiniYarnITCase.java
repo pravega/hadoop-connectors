@@ -29,6 +29,7 @@ import org.apache.hadoop.yarn.server.MiniYARNCluster;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -36,8 +37,8 @@ import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
 
-
-public class PravegaConnectorMiniYarnITCase {
+@Ignore //see https://github.com/pravega/hadoop-connectors/issues/75
+public class PravegaConnectorMiniYarnITCase extends ConnectorBaseITCase {
 
     private static final String TEST_SCOPE = "PravegaConnectorMiniYarnITCase";
     private static final String TEST_STREAM = "stream";
@@ -63,6 +64,7 @@ public class PravegaConnectorMiniYarnITCase {
 
         // setup mini dfs cluster
         YarnConfiguration conf = new YarnConfiguration();
+        addSecurityConfiguration(conf, SETUP_UTILS);
 
         conf.setBoolean("yarn.is.minicluster", true);
         dfsCluster = new MiniDFSCluster.Builder(conf).numDataNodes(NUM_NODES).build();
@@ -109,7 +111,7 @@ public class PravegaConnectorMiniYarnITCase {
         conf = PravegaInputFormat.builder(conf)
             .withScope(TEST_SCOPE)
             .forStream(TEST_STREAM)
-            .withURI(SETUP_UTILS.getControllerUri())
+            .withURI(SETUP_UTILS.getControllerUri().toString())
             .withDeserializer(JavaSerializer.class.getName())
             .build();
 

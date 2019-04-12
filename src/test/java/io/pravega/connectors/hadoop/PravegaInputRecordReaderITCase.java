@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 
-public class PravegaInputRecordReaderITCase {
+public class PravegaInputRecordReaderITCase extends ConnectorBaseITCase {
 
     private static final String TEST_SCOPE = "PravegaInputRecordReaderITCase";
     private static final String TEST_STREAM_1 = "stream1";
@@ -63,6 +63,7 @@ public class PravegaInputRecordReaderITCase {
         }
 
         Configuration conf = getConfiguration(TEST_STREAM_1);
+        addSecurityConfiguration(conf, SETUP_UTILS);
         Job job = new Job(conf);
 
         // get an InputSplit
@@ -94,6 +95,7 @@ public class PravegaInputRecordReaderITCase {
         }
 
         Configuration conf = getConfiguration(TEST_STREAM_2);
+        addSecurityConfiguration(conf, SETUP_UTILS);
         Job job = new Job(conf);
 
         // get an InputSplit
@@ -118,7 +120,7 @@ public class PravegaInputRecordReaderITCase {
         return PravegaInputFormat.builder()
             .withScope(TEST_SCOPE)
             .forStream(stream)
-            .withURI(SETUP_UTILS.getControllerUri())
+            .withURI(SETUP_UTILS.getControllerUri().toString())
             .withDeserializer(IntegerSerializer.class.getName())
             .build();
     }
