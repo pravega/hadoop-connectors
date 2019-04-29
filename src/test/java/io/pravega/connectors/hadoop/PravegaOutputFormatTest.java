@@ -24,6 +24,7 @@ import java.io.IOException;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -129,10 +130,10 @@ public class PravegaOutputFormatTest {
 
     private void mockClientFactory(PravegaOutputFormat<String> spyPravegaOutputFormat) {
         EventStreamClientFactory mockClientFactory = mock(EventStreamClientFactory.class);
-        when(spyPravegaOutputFormat.getClientFactory(anyString(), anyObject())).thenReturn(mockClientFactory);
-        when(mockClientFactory.createEventWriter(anyString(),
-                any(Serializer.class),
-                any(EventWriterConfig.class))).thenReturn(mockEventStreamWriter());
+        doReturn(mockClientFactory).when(spyPravegaOutputFormat).getClientFactory(anyString(), anyObject());
+        doReturn(mockEventStreamWriter())
+                .when(mockClientFactory)
+                .createEventWriter(anyString(), any(Serializer.class), any(EventWriterConfig.class));
     }
 
     static class EventRouter implements PravegaEventRouter<String> {

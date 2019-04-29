@@ -67,21 +67,19 @@ public class PravegaInputFormat<V> extends InputFormat<EventKey, V> {
         // check parameters
         Configuration conf = context.getConfiguration();
 
+        final URI controllerURI = Optional.ofNullable(conf.get(PravegaConfig.INPUT_URI_STRING)).map(URI::create).orElseThrow(() ->
+                new IOException("The Pravega controller URI must be configured (" + PravegaConfig.INPUT_URI_STRING + ")"));
         final String scopeName = Optional.ofNullable(conf.get(PravegaConfig.INPUT_SCOPE_NAME)).orElseThrow(() ->
                 new IOException("The input scope name must be configured (" + PravegaConfig.INPUT_SCOPE_NAME + ")"));
         final String streamName = Optional.ofNullable(conf.get(PravegaConfig.INPUT_STREAM_NAME)).orElseThrow(() ->
                 new IOException("The input stream name must be configured (" + PravegaConfig.INPUT_STREAM_NAME + ")"));
-        final URI controllerURI = Optional.ofNullable(conf.get(PravegaConfig.INPUT_URI_STRING)).map(URI::create).orElseThrow(() ->
-                new IOException("The Pravega controller URI must be configured (" + PravegaConfig.INPUT_URI_STRING + ")"));
-        final String deserializerClassName = Optional.ofNullable(conf.get(PravegaConfig.INPUT_DESERIALIZER)).orElseThrow(() ->
-                new IOException("The event deserializer must be configured (" + PravegaConfig.INPUT_DESERIALIZER + ")"));
-
         final StreamCut startStreamCut = getStreamCutFromString(
                 Optional.ofNullable(conf.get(PravegaConfig.INPUT_START_POSITION)).orElse(""));
         final StreamCut endStreamCut = getStreamCutFromString(
                 Optional.ofNullable(conf.get(PravegaConfig.INPUT_END_POSITION)).orElse(""));
 
-        ClientConfig clientConfig = ClientConfig.builder().controllerURI(controllerURI).build();
+        ClientConfig clientConfig = SecurityHelper.prepareClientConfig(conf, controllerURI);
+
         BatchClientFactory clientFactory = (externalClientFactory != null) ? externalClientFactory : BatchClientFactory.withScope(scopeName, clientConfig);
 
         // generate a split per segment
@@ -104,17 +102,18 @@ public class PravegaInputFormat<V> extends InputFormat<EventKey, V> {
         return new PravegaInputRecordReader<V>();
     }
 
-    public static String fetchLatestPosition(String uri, String scopeName, String streamName) throws IOException {
-        Preconditions.checkArgument(uri != null && !uri.isEmpty());
+    public static String fetchLatestPosition(ClientConfig clientConfig, String scopeName, String streamName) throws IOException {
+        Preconditions.checkNotNull(clientConfig, "ClientConfig cannot be null");
         Preconditions.checkArgument(scopeName != null && !scopeName.isEmpty());
         Preconditions.checkArgument(streamName != null && !streamName.isEmpty());
 
         String pos = "";
-        try (StreamManager streamManager = StreamManager.create(URI.create(uri))) {
+        try (StreamManager streamManager = StreamManager.create(clientConfig)) {
             pos = fetchPosition(streamManager, scopeName, streamName);
         }
         return pos;
     }
+
 
     @VisibleForTesting
     public static String fetchPosition(StreamManager streamManager, String scopeName, String streamName) throws IOException {

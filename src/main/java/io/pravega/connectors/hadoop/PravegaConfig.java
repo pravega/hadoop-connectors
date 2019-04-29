@@ -24,4 +24,7 @@ public class PravegaConfig {
     public static final String OUTPUT_URI_STRING = "output.pravega.uri";
     public static final String OUTPUT_SERIALIZER = "output.pravega.serializer";
     public static final String OUTPUT_EVENT_ROUTER = "output.pravega.eventRouter";
+
+    public static final String BASE64_TRUSTSTORE_FILE = "pravega.security.truststore";
+    public static final String VALIDATE_HOST_NAME = "pravega.security.validateHostName";
 }

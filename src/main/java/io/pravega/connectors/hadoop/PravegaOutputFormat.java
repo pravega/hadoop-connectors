@@ -44,7 +44,7 @@ public class PravegaOutputFormat<V> extends OutputFormat<NullWritable, V> {
 
     @Override
     public RecordWriter<NullWritable, V> getRecordWriter(TaskAttemptContext context) throws IOException, InterruptedException {
-        return getOutputRecordWriter(context.getConfiguration());
+        return getOutputRecordWriter(context);
     }
 
     @Override
@@ -78,9 +78,9 @@ public class PravegaOutputFormat<V> extends OutputFormat<NullWritable, V> {
 
     private EventStreamWriter<V> getPravegaWriter(String scopeName,
                                                   String streamName,
-                                                  URI controllerURI,
+                                                  ClientConfig clientConfig,
                                                   String serializerClassName) throws IOException {
-        EventStreamClientFactory clientFactory = getClientFactory(scopeName, controllerURI);
+        EventStreamClientFactory clientFactory = getClientFactory(scopeName, clientConfig);
         Object serializerInstance = getInstanceFromName(serializerClassName);
         if (!Serializer.class.isAssignableFrom(serializerInstance.getClass())) {
             throw new IOException(serializerInstance.getClass() + " is not a type of Serializer");
@@ -91,12 +91,12 @@ public class PravegaOutputFormat<V> extends OutputFormat<NullWritable, V> {
     }
 
     @VisibleForTesting
-    protected EventStreamClientFactory getClientFactory(String scope, URI controllerUri) {
-        ClientConfig clientConfig = ClientConfig.builder().controllerURI(controllerUri).build();
+    protected EventStreamClientFactory getClientFactory(String scope, ClientConfig clientConfig) {
         return EventStreamClientFactory.withScope(scope, clientConfig);
     }
 
-    private PravegaOutputRecordWriter<V> getOutputRecordWriter(Configuration conf) throws IOException {
+    private PravegaOutputRecordWriter<V> getOutputRecordWriter(TaskAttemptContext context) throws IOException {
+        Configuration conf = context.getConfiguration();
         final String streamName = Optional.ofNullable(conf.get(PravegaConfig.OUTPUT_STREAM_NAME)).orElseThrow(() ->
                 new IOException("The output stream name must be configured (" + PravegaConfig.OUTPUT_STREAM_NAME + ")"));
 
@@ -123,10 +123,13 @@ public class PravegaOutputFormat<V> extends OutputFormat<NullWritable, V> {
         if (router != null && !PravegaEventRouter.class.isAssignableFrom(router.getClass())) {
             throw new IOException(router.getClass() + " is not a type of PravegaEventRouter");
         }
+
+        ClientConfig clientConfig = SecurityHelper.prepareClientConfig(conf, controllerURI);
+
         @SuppressWarnings("unchecked")
         PravegaEventRouter<V> pravegaEventRouter = (PravegaEventRouter<V>) router;
 
-        EventStreamWriter<V> eventStreamWriter = getPravegaWriter(scope, stream, controllerURI, serializerClassName);
+        EventStreamWriter<V> eventStreamWriter = getPravegaWriter(scope, stream, clientConfig, serializerClassName);
 
         return new PravegaOutputRecordWriter<>(eventStreamWriter, pravegaEventRouter);
     }
