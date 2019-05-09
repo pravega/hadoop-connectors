@@ -87,6 +87,16 @@ tasks.withType(Upload) {
                     url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
                 }
             }
+            developers {
+                developer {
+                    id 'fpj'
+                    name 'Flavio Junqueira'
+                }
+                developer {
+                    id 'vijay'
+                    name 'Vijay S'
+                }
+            }
         }
 
         pom.scopeMappings.mappings.remove(configurations.testCompile)
