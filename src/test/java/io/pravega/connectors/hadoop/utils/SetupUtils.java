@@ -65,11 +65,12 @@ public final class SetupUtils {
     private static final String PRAVEGA_USERNAME = "admin";
     private static final String PRAVEGA_PASSWORD = "1111_aaaa";
     private static final String PASSWD_FILE = "passwd";
-    private static final String KEY_FILE = "key.pem";
-    private static final String CERT_FILE = "cert.pem";
-    private static final String STANDALONE_KEYSTORE_FILE = "standalone.keystore.jks";
-    private static final String STANDALONE_TRUSTSTORE_FILE = "standalone.truststore.jks";
-    private static final String STANDALONE_KEYSTORE_PASSWD_FILE = "standalone.keystore.jks.passwd";
+    private static final String KEY_FILE = "server-key.key";
+    private static final String CERT_FILE = "server-cert.crt";
+    private static final String CLIENT_TRUST_STORE_FILE = "ca-cert.crt";
+    private static final String STANDALONE_KEYSTORE_FILE = "server.keystore.jks";
+    private static final String STANDALONE_TRUSTSTORE_FILE = "client.truststore.jks";
+    private static final String STANDALONE_KEYSTORE_PASSWD_FILE = "server.keystore.jks.passwd";
 
     private final PravegaGateway gateway;
 
@@ -175,7 +176,7 @@ public final class SetupUtils {
     }
 
     private String getTrustStoreCerts() {
-        return getFileFromResource(CERT_FILE);
+        return getFileFromResource(CLIENT_TRUST_STORE_FILE);
     }
 
     /**
