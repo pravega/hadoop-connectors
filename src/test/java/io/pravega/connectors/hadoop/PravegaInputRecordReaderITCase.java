@@ -12,7 +12,6 @@ package io.pravega.connectors.hadoop;
 
 import io.pravega.client.stream.EventStreamWriter;
 import io.pravega.connectors.hadoop.utils.IntegerSerializer;
-import io.pravega.connectors.hadoop.utils.SetupUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -38,32 +37,27 @@ public class PravegaInputRecordReaderITCase extends ConnectorBaseITCase {
     private static final String TEST_STREAM_2 = "stream2";
     private static final int NUM_EVENTS = 20;
 
-    /**
-     * Setup utility
-     */
-    private static final SetupUtils SETUP_UTILS = new SetupUtils();
-
     @Before
     public void setupPravega() throws Exception {
-        SETUP_UTILS.startAllServices(TEST_SCOPE);
+        setupUtils.startAllServices(TEST_SCOPE);
     }
 
     @After
     public void tearDownPravega() throws Exception {
-        SETUP_UTILS.stopAllServices();
+        setupUtils.stopAllServices();
     }
 
     @Test
     public void testReadFromSingleSegment() throws Exception {
-        SETUP_UTILS.createTestStream(TEST_STREAM_1, 1);
-        EventStreamWriter<Integer> writer = SETUP_UTILS.getIntegerWriter(TEST_STREAM_1);
+        setupUtils.createTestStream(TEST_STREAM_1, 1);
+        EventStreamWriter<Integer> writer = setupUtils.getIntegerWriter(TEST_STREAM_1);
         for (int i = 0; i < NUM_EVENTS; i++) {
             CompletableFuture future = writer.writeEvent(i);
             future.get();
         }
 
         Configuration conf = getConfiguration(TEST_STREAM_1);
-        addSecurityConfiguration(conf, SETUP_UTILS);
+        addSecurityConfiguration(conf);
         Job job = new Job(conf);
 
         // get an InputSplit
@@ -87,15 +81,15 @@ public class PravegaInputRecordReaderITCase extends ConnectorBaseITCase {
 
     @Test
     public void testReadFromMultiSegments() throws Exception {
-        SETUP_UTILS.createTestStream(TEST_STREAM_2, 2);
-        EventStreamWriter<Integer> writer = SETUP_UTILS.getIntegerWriter(TEST_STREAM_2);
+        setupUtils.createTestStream(TEST_STREAM_2, 2);
+        EventStreamWriter<Integer> writer = setupUtils.getIntegerWriter(TEST_STREAM_2);
         for (int i = 0; i < NUM_EVENTS; i++) {
             CompletableFuture future = writer.writeEvent(i);
             future.get();
         }
 
         Configuration conf = getConfiguration(TEST_STREAM_2);
-        addSecurityConfiguration(conf, SETUP_UTILS);
+        addSecurityConfiguration(conf);
         Job job = new Job(conf);
 
         // get an InputSplit
@@ -120,7 +114,7 @@ public class PravegaInputRecordReaderITCase extends ConnectorBaseITCase {
         return PravegaInputFormat.builder()
             .withScope(TEST_SCOPE)
             .forStream(stream)
-            .withURI(SETUP_UTILS.getControllerUri().toString())
+            .withURI(setupUtils.getControllerUri().toString())
             .withDeserializer(IntegerSerializer.class.getName())
             .build();
     }

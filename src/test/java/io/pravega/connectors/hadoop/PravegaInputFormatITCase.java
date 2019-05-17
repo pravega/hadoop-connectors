@@ -16,7 +16,6 @@ import io.pravega.client.stream.impl.ControllerImpl;
 import io.pravega.client.stream.impl.ControllerImplConfig;
 import io.pravega.client.stream.impl.StreamImpl;
 import io.pravega.connectors.hadoop.utils.IntegerSerializer;
-import io.pravega.connectors.hadoop.utils.SetupUtils;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -43,7 +42,6 @@ public class PravegaInputFormatITCase extends ConnectorBaseITCase {
     private static final String TEST_SCOPE = "PravegaInputFormatITCase";
     private static final String TEST_STREAM = "stream";
     private static final int USED_SPACE_PER_INTEGER = 12;
-    private static final SetupUtils SETUP_UTILS = new SetupUtils();
 
     private ScheduledExecutorService executor;
     private ControllerImpl controller = null;
@@ -51,13 +49,13 @@ public class PravegaInputFormatITCase extends ConnectorBaseITCase {
 
     @Before
     public void setupPravega() throws Exception {
-        SETUP_UTILS.startAllServices(TEST_SCOPE);
-        SETUP_UTILS.createTestStream(TEST_STREAM, 1);
-        writer = SETUP_UTILS.getIntegerWriter(TEST_STREAM);
+        setupUtils.startAllServices(TEST_SCOPE);
+        setupUtils.createTestStream(TEST_STREAM, 1);
+        writer = setupUtils.getIntegerWriter(TEST_STREAM);
 
         executor = Executors.newSingleThreadScheduledExecutor();
         controller = new ControllerImpl(ControllerImplConfig.builder()
-            .clientConfig(SETUP_UTILS.getClientConfig())
+            .clientConfig(setupUtils.getClientConfig())
             .retryAttempts(1).build(),
             executor);
     }
@@ -65,7 +63,7 @@ public class PravegaInputFormatITCase extends ConnectorBaseITCase {
     @After
     public void tearDownPravega() throws Exception {
         executor.shutdown();
-        SETUP_UTILS.stopAllServices();
+        setupUtils.stopAllServices();
     }
 
     @Test
@@ -74,11 +72,11 @@ public class PravegaInputFormatITCase extends ConnectorBaseITCase {
         conf = PravegaInputFormat.builder(conf)
             .withScope(TEST_SCOPE)
             .forStream(TEST_STREAM)
-            .withURI(SETUP_UTILS.getControllerUri().toString())
+            .withURI(setupUtils.getControllerUri().toString())
             .withDeserializer(IntegerSerializer.class.getName())
             .build();
 
-        addSecurityConfiguration(conf, SETUP_UTILS);
+        addSecurityConfiguration(conf);
         Job job = new Job(conf);
 
         writeEvents(20, 0);

@@ -13,7 +13,6 @@ package io.pravega.connectors.hadoop;
 
 import io.pravega.client.stream.EventStreamWriter;
 import io.pravega.client.stream.impl.JavaSerializer;
-import io.pravega.connectors.hadoop.utils.SetupUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -44,7 +43,6 @@ public class PravegaConnectorMiniYarnITCase extends ConnectorBaseITCase {
     private static final String TEST_STREAM = "stream";
     private static final int NUM_SEGMENTS = 3;
     private static final int NUM_NODES = 2;
-    private static final SetupUtils SETUP_UTILS = new SetupUtils();
 
     private Path outputPath;
     private Job job;
@@ -54,9 +52,9 @@ public class PravegaConnectorMiniYarnITCase extends ConnectorBaseITCase {
     @Before
     public void setUp() throws Exception {
         // setup pravega server
-        SETUP_UTILS.startAllServices(TEST_SCOPE);
-        SETUP_UTILS.createTestStream(TEST_STREAM, NUM_SEGMENTS);
-        EventStreamWriter<String> writer = SETUP_UTILS.getStringWriter(TEST_STREAM);
+        setupUtils.startAllServices(TEST_SCOPE);
+        setupUtils.createTestStream(TEST_STREAM, NUM_SEGMENTS);
+        EventStreamWriter<String> writer = setupUtils.getStringWriter(TEST_STREAM);
         writer.writeEvent("pravega test");
         writer.writeEvent("pravega job test");
         writer.writeEvent("pravega local job test");
@@ -64,7 +62,7 @@ public class PravegaConnectorMiniYarnITCase extends ConnectorBaseITCase {
 
         // setup mini dfs cluster
         YarnConfiguration conf = new YarnConfiguration();
-        addSecurityConfiguration(conf, SETUP_UTILS);
+        addSecurityConfiguration(conf);
 
         conf.setBoolean("yarn.is.minicluster", true);
         dfsCluster = new MiniDFSCluster.Builder(conf).numDataNodes(NUM_NODES).build();
@@ -92,7 +90,7 @@ public class PravegaConnectorMiniYarnITCase extends ConnectorBaseITCase {
         if (dfsCluster != null) {
             dfsCluster.shutdown();
         }
-        SETUP_UTILS.stopAllServices();
+        setupUtils.stopAllServices();
     }
 
     @Test
@@ -111,7 +109,7 @@ public class PravegaConnectorMiniYarnITCase extends ConnectorBaseITCase {
         conf = PravegaInputFormat.builder(conf)
             .withScope(TEST_SCOPE)
             .forStream(TEST_STREAM)
-            .withURI(SETUP_UTILS.getControllerUri().toString())
+            .withURI(setupUtils.getControllerUri().toString())
             .withDeserializer(JavaSerializer.class.getName())
             .build();
 

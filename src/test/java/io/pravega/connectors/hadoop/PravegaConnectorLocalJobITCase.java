@@ -13,7 +13,6 @@ package io.pravega.connectors.hadoop;
 import io.pravega.client.stream.EventStreamReader;
 import io.pravega.client.stream.EventStreamWriter;
 import io.pravega.client.stream.impl.JavaSerializer;
-import io.pravega.connectors.hadoop.utils.SetupUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.hadoop.conf.Configuration;
@@ -44,7 +43,6 @@ public class PravegaConnectorLocalJobITCase extends ConnectorBaseITCase {
     private static final String TEST_STREAM = "stream";
     private static final String TEST_STREAM_OUT = "streamout";
     private static final int NUM_SEGMENTS = 3;
-    private static final SetupUtils SETUP_UTILS = new SetupUtils();
 
     private Path outputPath;
     private Job job;
@@ -54,15 +52,15 @@ public class PravegaConnectorLocalJobITCase extends ConnectorBaseITCase {
     @Before
     public void setUp() throws Exception {
         // setup pravega server
-        SETUP_UTILS.startAllServices(TEST_SCOPE);
-        SETUP_UTILS.createTestStream(TEST_STREAM, NUM_SEGMENTS);
-        SETUP_UTILS.createTestStream(TEST_STREAM_OUT, NUM_SEGMENTS);
-        writer = SETUP_UTILS.getStringWriter(TEST_STREAM);
+        setupUtils.startAllServices(TEST_SCOPE);
+        setupUtils.createTestStream(TEST_STREAM, NUM_SEGMENTS);
+        setupUtils.createTestStream(TEST_STREAM_OUT, NUM_SEGMENTS);
+        writer = setupUtils.getStringWriter(TEST_STREAM);
     }
 
     @After
     public void tearDownPravega() throws Exception {
-        SETUP_UTILS.stopAllServices();
+        setupUtils.stopAllServices();
         if (outputPath != null && fs.exists(outputPath)) {
             fs.delete(outputPath, true);
         }
@@ -109,7 +107,7 @@ public class PravegaConnectorLocalJobITCase extends ConnectorBaseITCase {
         }
 
         String endPos1 = PravegaInputFormat.fetchLatestPosition(
-                SETUP_UTILS.getClientConfig(), TEST_SCOPE, TEST_STREAM);
+                setupUtils.getClientConfig(), TEST_SCOPE, TEST_STREAM);
 
         // won't be read because it's written after end poisitions are fetched
         writer.writeEvent("onemore");
@@ -141,7 +139,7 @@ public class PravegaConnectorLocalJobITCase extends ConnectorBaseITCase {
         }
 
         String endPos2 = PravegaInputFormat.fetchLatestPosition(
-                SETUP_UTILS.getClientConfig(), TEST_SCOPE, TEST_STREAM);
+                setupUtils.getClientConfig(), TEST_SCOPE, TEST_STREAM);
 
         // won't be read because it's written after end poisitions are fetched
         writer.writeEvent("twomore");
@@ -181,7 +179,7 @@ public class PravegaConnectorLocalJobITCase extends ConnectorBaseITCase {
 
     private Job prepareJobWithInputConfig(Configuration conf, Path outputPath, String startPos, String endPos) throws Exception {
         Configuration inputConf = prepareInputFormatConfiguration(conf, startPos, endPos);
-        addSecurityConfiguration(inputConf, SETUP_UTILS);
+        addSecurityConfiguration(inputConf);
 
         Job job = Job.getInstance(inputConf, "WordCount");
         job.setJarByClass(PravegaConnectorLocalJobITCase.class);
@@ -234,7 +232,7 @@ public class PravegaConnectorLocalJobITCase extends ConnectorBaseITCase {
         job.waitForCompletion(true);
         Assert.assertTrue(job.isSuccessful());
 
-        EventStreamReader<String> reader = SETUP_UTILS.getStringReader(TEST_STREAM_OUT);
+        EventStreamReader<String> reader = setupUtils.getStringReader(TEST_STREAM_OUT);
         Set<String> result = new HashSet();
         for (int i = 0; i < 4; i++) {
             String event = reader.readNextEvent(1000).getEvent();
@@ -253,7 +251,7 @@ public class PravegaConnectorLocalJobITCase extends ConnectorBaseITCase {
 
         Configuration inputConf = prepareInputFormatConfiguration(conf, startPos, endPos);
         Configuration outputConf = prepareOutputFormatConfiguration(inputConf);
-        addSecurityConfiguration(outputConf, SETUP_UTILS);
+        addSecurityConfiguration(outputConf);
 
         Job job = Job.getInstance(outputConf, "InAndOut");
 
@@ -276,7 +274,7 @@ public class PravegaConnectorLocalJobITCase extends ConnectorBaseITCase {
         return PravegaInputFormat.builder(conf)
                 .withScope(TEST_SCOPE)
                 .forStream(TEST_STREAM)
-                .withURI(SETUP_UTILS.getControllerUri().toString())
+                .withURI(setupUtils.getControllerUri().toString())
                 .withDeserializer(JavaSerializer.class.getName())
                 .startPosition(startPos)
                 .endPosition(endPos)
@@ -287,7 +285,7 @@ public class PravegaConnectorLocalJobITCase extends ConnectorBaseITCase {
         return PravegaOutputFormat.builder(conf)
                 .withScope(TEST_SCOPE)
                 .forStream(TEST_STREAM_OUT)
-                .withURI(SETUP_UTILS.getControllerUri().toString())
+                .withURI(setupUtils.getControllerUri().toString())
                 .withSerializer(JavaSerializer.class.getName())
                 .withEventRouter(EventRouter.class.getName())
                 .build();
