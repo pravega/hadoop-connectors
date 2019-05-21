@@ -39,7 +39,7 @@ public abstract class ConnectorBaseITCase {
     @Before
     public void initialize() {
         if (setupUtils.isEnableAuth()) {
-            environmentVariables.set("pravega_client_auth_method", "basic");
+            environmentVariables.set("pravega_client_auth_method", "Basic");
             environmentVariables.set("pravega_client_auth_token", SetupUtils.defaultAuthToken());
         }
     }
