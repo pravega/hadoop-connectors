@@ -104,6 +104,35 @@ shadowJar {
     relocate 'com.google', 'io.pravega.shaded.com.google'
 }
 
+distributions {
+    release {
+        contents {
+            from shadowJar
+            from javadocJar
+            from sourceJar
+        }
+    }
+    workspace {
+        contents {
+            from ('.') {
+                exclude "build"
+                exclude ".gradle"
+                exclude ".github"
+                exclude ".idea"
+                exclude "out"
+                exclude "pravega/*"
+                exclude "target"
+                exclude "*.log"
+            }
+        }
+    }
+}
+
+task distribution(type: Copy, dependsOn: [installReleaseDist, installWorkspaceDist, assembleWorkspaceDist]) {
+    from ("$buildDir/install/hadoop-connectors-release")
+    into ("$buildDir/distributions")
+}
+
 javadoc {
     title = "Pravega Hadoop Connector"
     failOnError = false
