@@ -18,13 +18,13 @@
     </appender>
 
     <root level="INFO">
-        <appender-ref ref="STDOUT"/>
+        <!--<appender-ref ref="STDOUT"/>-->
         <appender-ref ref="FILE" />
     </root>
 
     <!-- suppress unnecessary logging statements to keep the log file size minimum -->
     <logger name="io.pravega.connectors" level="INFO"/>
-    <logger name="io.pravega" level="OFF"/>
+    <logger name="io.pravega" level="INFO"/>
     <logger name="io.netty" level="OFF"/>
     <logger name="io.grpc" level="OFF"/>
     <logger name="org.apache.zookeeper" level="OFF"/>
