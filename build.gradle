@@ -57,7 +57,6 @@ repositories {
     else {
         jcenter()
         mavenCentral()
-        maven { url "https://oss.sonatype.org/content/repositories/iopravega-1041/" }
         maven { url "https://repository.apache.org/snapshots" }
         maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
         maven { url "https://oss.jfrog.org/jfrog-dependencies" }
@@ -68,8 +67,7 @@ configurations {
     shadowOnly {
     }
     testCompile.extendsFrom(compileOnly)
-    testCompile.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
-    testCompile.exclude group: 'log4j', module: 'log4j'
+    testCompile.exclude group: 'com.sun.jersey'
 }
 
 dependencies {
@@ -84,17 +82,11 @@ dependencies {
 
     testCompile group: 'junit', name: 'junit', version: junitVersion
     testCompile group: 'org.mockito', name: 'mockito-all', version: mockitoVersion
-    testCompile (group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion) {
-        exclude group: 'com.sun.jersey'
-    }
+    testCompile group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion
     testCompile group: 'io.pravega', name: 'pravega-standalone', version: pravegaVersion
 
-    compileOnly (group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion) {
-        exclude group: 'com.sun.jersey'
-    }
-    compileOnly (group: 'org.apache.hadoop', name: 'hadoop-mapreduce-client-core', version: hadoopVersion) {
-        exclude group: 'com.sun.jersey'
-    }
+    compileOnly group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion
+    compileOnly group: 'org.apache.hadoop', name: 'hadoop-mapreduce-client-core', version: hadoopVersion
     compileOnly group: 'org.projectlombok', name: 'lombok', version: lombokVersion // not needed at runtime
 
     shadowOnly group: 'org.slf4j', name: 'slf4j-api', version: slf4jApiVersion
