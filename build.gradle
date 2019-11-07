@@ -66,23 +66,28 @@ repositories {
 configurations {
     shadowOnly {
     }
+    testCompile.extendsFrom(compileOnly)
+    testCompile.exclude group: 'com.sun.jersey'
 }
 
 dependencies {
     compile(group: 'io.pravega', name: 'pravega-client', version: pravegaVersion) {
         exclude group: 'org.slf4j', module: 'slf4j-api'
+
+        // lombok should be compileOnly
+        exclude group: 'org.projectlombok', module: 'lombok'
+
         exclude group: 'log4j', module: 'log4j'
     }
 
     testCompile group: 'junit', name: 'junit', version: junitVersion
-    testCompile(group: 'io.pravega', name: 'pravega-standalone', version: pravegaVersion) {
-        exclude group: 'com.sun.jersey', module: 'jersey-core'
-    }
     testCompile group: 'org.mockito', name: 'mockito-all', version: mockitoVersion
     testCompile group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion
+    testCompile group: 'io.pravega', name: 'pravega-standalone', version: pravegaVersion
 
     compileOnly group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion
     compileOnly group: 'org.apache.hadoop', name: 'hadoop-mapreduce-client-core', version: hadoopVersion
+    compileOnly group: 'org.projectlombok', name: 'lombok', version: lombokVersion // not needed at runtime
 
     shadowOnly group: 'org.slf4j', name: 'slf4j-api', version: slf4jApiVersion
     shadowOnly group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion
