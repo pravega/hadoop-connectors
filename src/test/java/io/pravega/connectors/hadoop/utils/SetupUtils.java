@@ -1,18 +1,17 @@
 /**
  * Copyright (c) 2017 Dell Inc., or its subsidiaries. All Rights Reserved.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
  */
 
 package io.pravega.connectors.hadoop.utils;
 
 import com.google.common.collect.ImmutableMap;
 import io.pravega.client.ClientConfig;
-import io.pravega.client.ClientFactory;
 import io.pravega.client.EventStreamClientFactory;
 import io.pravega.client.admin.ReaderGroupManager;
 import io.pravega.client.admin.StreamManager;
@@ -157,7 +156,7 @@ public final class SetupUtils {
      *
      * @return Path of the temp file.
      */
-    static String getFileFromResource(String resourceName)  {
+    static String getFileFromResource(String resourceName) {
         try {
             Path tempPath = Files.createTempFile("test-", ".tmp");
             tempPath.toFile().deleteOnExit();
@@ -329,7 +328,7 @@ public final class SetupUtils {
                 readerGroup,
                 ReaderGroupConfig.builder().stream(stream).build());
 
-        ClientFactory clientFactory = ClientFactory.withScope(this.scope, getClientConfig());
+        EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(this.scope, getClientConfig());
         final String readerGroupId = UUID.randomUUID().toString();
         return clientFactory.createReader(
                 readerGroupId,
