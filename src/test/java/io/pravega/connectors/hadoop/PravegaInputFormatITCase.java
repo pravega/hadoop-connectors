@@ -10,10 +10,11 @@
 
 package io.pravega.connectors.hadoop;
 
+import io.pravega.client.control.impl.Controller;
+import io.pravega.client.control.impl.ControllerImpl;
+import io.pravega.client.control.impl.ControllerImplConfig;
 import io.pravega.client.stream.EventStreamWriter;
 import io.pravega.client.stream.Stream;
-import io.pravega.client.stream.impl.ControllerImpl;
-import io.pravega.client.stream.impl.ControllerImplConfig;
 import io.pravega.client.stream.impl.StreamImpl;
 import io.pravega.connectors.hadoop.utils.IntegerSerializer;
 import io.pravega.connectors.hadoop.utils.SetupUtils;
@@ -46,7 +47,7 @@ public class PravegaInputFormatITCase extends ConnectorBaseITCase {
     private static final SetupUtils SETUP_UTILS = new SetupUtils();
 
     private ScheduledExecutorService executor;
-    private ControllerImpl controller = null;
+    private Controller controller = null;
     private EventStreamWriter<Integer> writer;
 
     @Before

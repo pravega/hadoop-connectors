@@ -18,9 +18,6 @@ import io.pravega.client.admin.StreamManager;
 import io.pravega.client.segment.impl.Segment;
 import io.pravega.client.stream.Stream;
 import io.pravega.client.stream.StreamCut;
-import io.pravega.client.stream.impl.Controller;
-import io.pravega.client.stream.impl.ControllerImpl;
-import io.pravega.client.stream.impl.ControllerImplConfig;
 import io.pravega.client.stream.impl.DefaultCredentials;
 import io.pravega.client.stream.impl.JavaSerializer;
 import io.pravega.client.stream.impl.StreamCutImpl;
@@ -204,17 +201,6 @@ public final class SetupUtils {
                 .withCredentials(new DefaultCredentials(PRAVEGA_PASSWORD, PRAVEGA_USERNAME))
                 .withHostnameValidation(enableHostNameValidation)
                 .withTrustStore(trustStoreCertFile);
-    }
-
-    /**
-     * Create a controller facade for this cluster.
-     * @return The controller facade, which must be closed by the caller.
-     */
-    public Controller newController() {
-        ControllerImplConfig config = ControllerImplConfig.builder()
-                .clientConfig(getClientConfig())
-                .build();
-        return new ControllerImpl(config, DEFAULT_SCHEDULED_EXECUTOR_SERVICE);
     }
 
     /**
