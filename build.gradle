@@ -60,6 +60,7 @@ repositories {
         maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
         maven { url "https://repository.apache.org/snapshots" }
         maven { url "https://oss.jfrog.org/jfrog-dependencies" }
+        maven { url "https://oss.sonatype.org/content/repositories/iopravega-1089" }
     }
 }
 
