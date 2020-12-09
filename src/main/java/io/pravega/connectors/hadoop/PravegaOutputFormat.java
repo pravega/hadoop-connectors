@@ -19,6 +19,7 @@ import io.pravega.client.stream.Serializer;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.util.Optional;
 import java.util.Random;
@@ -66,8 +67,8 @@ public class PravegaOutputFormat<V> extends OutputFormat<NullWritable, V> {
         if (className != null) {
             try {
                 Class<?> serializerClass = Class.forName(className);
-                object = serializerClass.newInstance();
-            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+                object = serializerClass.getDeclaredConstructor().newInstance();
+            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
                 String errorMessage = "Unable to create instance for the class (" + className + ")";
                 log.error(errorMessage, e);
                 throw new IOException(errorMessage, e);

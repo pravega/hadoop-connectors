@@ -11,7 +11,7 @@ package io.pravega.connectors.hadoop;
 
 import com.google.common.base.Preconditions;
 import io.pravega.client.ClientConfig;
-import io.pravega.client.stream.impl.Credentials;
+import io.pravega.shared.security.auth.Credentials;
 
 import javax.annotation.Nullable;
 import java.net.URI;

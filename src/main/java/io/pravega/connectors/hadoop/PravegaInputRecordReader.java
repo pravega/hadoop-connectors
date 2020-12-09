@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.util.Optional;
 import javax.annotation.concurrent.NotThreadSafe;
@@ -75,8 +76,8 @@ public class PravegaInputRecordReader<V> extends RecordReader<EventKey, V> {
         String deserializerClassName = conf.get(PravegaConfig.INPUT_DESERIALIZER);
         try {
             Class<?> deserializerClass = Class.forName(deserializerClassName);
-            deserializer = (Serializer<V>) deserializerClass.newInstance();
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+            deserializer = (Serializer<V>) deserializerClass.getDeclaredConstructor().newInstance();
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             log.error("Exception when creating deserializer: {}", e);
             throw new IOException("Unable to create the event deserializer (" + deserializerClassName + ")", e);
         }

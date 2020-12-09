@@ -43,7 +43,7 @@ tasks.withType(JavaCompile) {
 checkstyle {
     toolVersion = checkstyleToolVersion
 
-    configFile = new File(rootDir, "checkstyle/checkstyle.xml")
+    configDir = new File(rootDir, "checkstyle")
     configProperties = [importControlFile: "$rootDir/checkstyle/import-control.xml"]
 }
 
@@ -84,9 +84,11 @@ dependencies {
     testCompile group: 'org.mockito', name: 'mockito-all', version: mockitoVersion
     testCompile group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion
     testCompile group: 'io.pravega', name: 'pravega-standalone', version: pravegaVersion
+    testAnnotationProcessor group: 'org.projectlombok', name: 'lombok', version: lombokVersion
 
     compileOnly group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion
     compileOnly group: 'org.apache.hadoop', name: 'hadoop-mapreduce-client-core', version: hadoopVersion
+    annotationProcessor group: 'org.projectlombok', name: 'lombok', version: lombokVersion
     compileOnly group: 'org.projectlombok', name: 'lombok', version: lombokVersion // not needed at runtime
 
     shadowOnly group: 'org.slf4j', name: 'slf4j-api', version: slf4jApiVersion

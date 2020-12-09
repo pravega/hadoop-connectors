@@ -10,7 +10,7 @@
 language: java
 install: true
 jdk:
-  - openjdk8
+  - openjdk11
 
 # the secure configurations in env: section is for BINTRAY_USER=<USER> and BINTRAY_KEY=<KEY> properties
 # which will be used for publishing artifacts to snapshot repository
@@ -44,7 +44,5 @@ notifications:
     rooms:
       secure: crNIo08lzOP05MEUg3B+riVPbI3K2Y56oQ4f9qaxQ4vod3MAYdSuWF9EbCvMKYM93eboHHXT+QecXLUs6QJ6m07komFawSCIPMnWTUYr0qHygCnV6wc7u+8rZyNeI4EgCn8vlb4/WjA6I3hOuQUSoVgti7LdNe2V0fXXHJiHiduqtSDG5RFIc79ceYUbZF+ouxlGY7IKQ8UZTozMQzl8Gmm4lVAYmBDlv7g9jM3Q8OqC0IOAh718413KtHH5cPfeGTsRspZOL5TxwYX61hrQAnXbecVOvV2R7nYkfwsDCR/xMj846egN1wrlwW1P65a18q2pMqpBryuhjxHR3jWm+WIxGqu5Is330umIbr80qFAYMPx6pE2pk3FUFFJfAfFSwDULRESAO8R99ZHSuy2RYDWiP9A4HwcXHFnzVjxrbctamZotNEBoRYEsc394BxF3i8ft3u2k/IBqiPCPXlmGKzIBK43Ou0AdRF/qbzZxIRCSJxcYV8S7+YeuaR6/5bb8uAJ9RfwkaoWOxjV03OE/nZSs/2kIyXKp0WmCfVmPTKx6NRqSldY5eyjP69nCFjQUZ4CTHOFvXh8ShExJ/p3oIrIIn1zH1teo80EokzrX5B4vb7ORWBZ4kHKzpei9+HVWFUIVLGFQtY8cz0E3wGaAeEPP7jcxv+C4H+YwVviMCDg=
   email:
-  - bo.yang@emc.com
-  - eron.wright@emc.com
+  - b.zhou@dell.com
   - flavio.junqueira@emc.com
-  - lida.he@emc.com
