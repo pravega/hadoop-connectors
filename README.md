@@ -18,17 +18,12 @@ Implements both the input and the output format interfaces for Hadoop. It levera
 
 Build
 -------
-The build script handles Pravega as a _source dependency_, meaning that the connector is linked to a specific commit of Pravega (as opposed to a specific release version) in order to faciliate co-development.  This is accomplished with a combination of a _git submodule_ and the use of Gradle's _composite build_ feature. 
+The build script handles Pravega as a _package dependency_, which means the connector is linked to a specific SNAPSHOT version of Pravega (defined at `pravegaVersion` in the `gradle.properties` file). 
 
 ### Cloning the repository
-When cloning the connector repository, be sure to instruct git to recursively checkout submodules, e.g.:
-```
-git clone --recurse-submodules https://github.com/pravega/hadoop-connectors.git
-```
 
-To update an existing repository:
 ```
-git submodule update --init --recursive
+git clone https://github.com/pravega/hadoop-connectors.git
 ```
 
 ### Building Pravega
