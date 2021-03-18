@@ -43,7 +43,7 @@ jobs:
     needs: [build]
     runs-on: ubuntu-latest
     # only publish the snapshot when it is a push on the master or the release branch (starts with r0.x or r1.x)
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+    if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/r0.') || startsWith(github.ref, 'refs/heads/r1.')) }}
     env:
       BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
       BINTRAY_KEY: ${{ secrets.BINTRAY_KEY }}
