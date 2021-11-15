@@ -55,7 +55,6 @@ repositories {
         }
     }
     else {
-        jcenter()
         mavenCentral()
         maven {
             url "https://maven.pkg.github.com/pravega/pravega"
@@ -92,6 +91,7 @@ dependencies {
     testCompile group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion
     testCompile group: 'io.pravega', name: 'pravega-standalone', version: pravegaVersion
     testAnnotationProcessor group: 'org.projectlombok', name: 'lombok', version: lombokVersion
+    // Needed to stick to the version of Zookeeper used by Pravega.
     testImplementation(group: 'org.apache.zookeeper', name: 'zookeeper') {
         version {
             strictly '3.5.9'
