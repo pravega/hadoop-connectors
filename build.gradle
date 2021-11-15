@@ -92,6 +92,11 @@ dependencies {
     testCompile group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion
     testCompile group: 'io.pravega', name: 'pravega-standalone', version: pravegaVersion
     testAnnotationProcessor group: 'org.projectlombok', name: 'lombok', version: lombokVersion
+    testImplementation(group: 'org.apache.zookeeper', name: 'zookeeper') {
+        version {
+            strictly '3.5.9'
+        }
+    }
 
     compileOnly group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion
     compileOnly group: 'org.apache.hadoop', name: 'hadoop-mapreduce-client-core', version: hadoopVersion
