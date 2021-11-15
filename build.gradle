@@ -118,9 +118,6 @@ shadowJar {
     version = version
     zip64 = true
     mergeServiceFiles()
-
-    relocate 'io.netty', 'io.pravega.shaded.io.netty'
-    relocate 'com.google', 'io.pravega.shaded.com.google'
 }
 
 javadoc {
