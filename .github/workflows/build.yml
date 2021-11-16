@@ -76,5 +76,6 @@ jobs:
           path: ./*
           key: ${{ github.run_id }}
 
-      - name: Publish to repo
-        run: ./gradlew publishToRepo -PpublishUrl=jcenterSnapshot -PpublishUsername=$BINTRAY_USER -PpublishPassword=$BINTRAY_KEY
+      - name: Publish to Git Packages
+        run: ./gradlew publish -PpublishUrl=https://maven.pkg.github.com/${{github.repository}} -PpublishUsername=${{github.actor}} -PpublishPassword=${{secrets.GITHUB_TOKEN}}
+
